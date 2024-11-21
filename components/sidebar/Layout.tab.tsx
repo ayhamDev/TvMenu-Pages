@@ -1,13 +1,7 @@
-import React, { useEffect, useState } from "react";
-import AnimatedTab from "./AnimatedTab";
-import { ScrollArea } from "../ui/scroll-area";
-import { Button } from "../ui/button";
-import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import ChangesHandler from "./ChangesHandler";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Sidebar, TabletSmartphone } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
@@ -15,9 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import SidebarItem from "./SidebarItem";
-import { Label } from "../ui/label";
+import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
+import AnimatedTab from "./AnimatedTab";
+import ChangesHandler from "./ChangesHandler";
 import SidebarContent from "./SidebarContent";
+import SidebarItem from "./SidebarItem";
 
 const LayoutTab = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);

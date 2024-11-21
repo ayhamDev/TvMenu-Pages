@@ -30,6 +30,13 @@ const SettingsTab = () => {
               <Input id="title-input" placeholder="e.g. Coffe Master..." />
             </div>
             <div className="flex flex-col gap-2">
+              <Label htmlFor="short_title-input">Short Title</Label>
+              <Input
+                id="short_title-input"
+                placeholder="e.g. Coffe Master..."
+              />
+            </div>
+            <div className="flex flex-col gap-2">
               <Label htmlFor="description-input">Description</Label>
               <Textarea
                 id="description-input"
@@ -84,7 +91,7 @@ const SettingsTab = () => {
                 <TabsTrigger className="w-full" value="defualt">
                   Default
                 </TabsTrigger>
-                <TabsTrigger className="w-full" value="custom">
+                <TabsTrigger className="w-full" value="custom" disabled>
                   Custom
                 </TabsTrigger>
               </TabsList>
@@ -103,6 +110,10 @@ const SettingsTab = () => {
                 </p>
               </TabsContent>
               <TabsContent value="custom" className="mt-4">
+                <p className="text-muted-foreground text-xs mb-2">
+                  Custom Domain Is Optional
+                </p>
+
                 <div className="flex items-center">
                   <Input
                     className="rounded-r-none"

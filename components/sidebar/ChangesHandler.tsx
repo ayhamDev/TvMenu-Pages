@@ -7,10 +7,7 @@ interface IChangesHandlerProps {
   ShowChangeActions: boolean;
 }
 
-const ChangesHandler = ({
-  ShowChangeActions,
-  SetShowChangeActions,
-}: IChangesHandlerProps) => {
+const ChangesHandler = ({ ShowChangeActions }: IChangesHandlerProps) => {
   return (
     <AnimatePresence mode="sync">
       <motion.div

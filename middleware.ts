@@ -1,31 +1,89 @@
 import { NextRequest, NextResponse } from "next/server";
+import { FindPage } from "./utils/FindPage";
 
 const PUBLIC_FILE = /\.(.*)$/; // Files
 
-export function middleware(request: NextRequest) {
+const pageCache = new Map();
+
+export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
-  const [subdomain] = host.split(".");
+  const { hostname } = new URL(`http://${host}`);
+  const domainParts = hostname.split(".");
+  const subdomain = domainParts.length > 2 ? domainParts[0] : null;
+  const rootDomain = domainParts.slice(domainParts.length - 2).join(".");
 
-  // Skip rewriting for the main domain and specific subdomains like 'www' or 'api'
   const url = request.nextUrl.clone();
-
-  // Skip public files
-  if (PUBLIC_FILE.test(url.pathname) || url.pathname.includes("_next"))
+  if (PUBLIC_FILE.test(url.pathname) || url.pathname.includes("_next")) {
     return NextResponse.next();
+  }
+
   if (
     subdomain &&
+    rootDomain === process.env.NEXT_PUBLIC_DOMAIN &&
     subdomain !== "menuone" &&
     subdomain !== "www" &&
     subdomain !== "api"
   ) {
-    // Rewrite to `/${subdomain}` if the subdomain is valid
+    // Check the cache
+    const cachedResult = pageCache.get(subdomain);
+    if (cachedResult && cachedResult.expires > Date.now()) {
+      // Serve the cached response if available
+      if (cachedResult.page) {
+        const req = NextResponse.rewrite(
+          new URL(
+            `/client/${subdomain}${request.nextUrl.pathname}`,
+            request.url
+          )
+        );
+        req.headers.set("X-Url", request.url);
+
+        // Update the cache in the background
+        refreshCache(subdomain);
+        return req;
+      } else {
+        // If cached as "not found," immediately respond with an error
+        return NextResponse.error();
+      }
+    }
+
+    // If no valid cache, fetch the page
+    const [page, error] = await FindPage(subdomain);
+
+    if (!page || (error?.response && error?.response?.status >= 201)) {
+      // Cache the "not found" state and respond with an error
+      // pageCache.set(subdomain, { page: null, expires: Date.now() + 60 * 1000 });
+      return NextResponse.error();
+    }
+
+    // Cache the valid result and serve the response
+    pageCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
     const req = NextResponse.rewrite(
       new URL(`/client/${subdomain}${request.nextUrl.pathname}`, request.url)
     );
     req.headers.set("X-Url", request.url);
+
     return req;
   }
 
-  // Continue as usual if no valid subdomain
   return NextResponse.next();
+}
+
+// Function to refresh the cache asynchronously
+async function refreshCache(subdomain: string) {
+  try {
+    const [page, error] = await FindPage(subdomain);
+    if (!page || (error?.response && error?.response?.status >= 201)) {
+      // Cache "not found" for 1 minute
+      pageCache.set(subdomain, { page: null, expires: Date.now() + 60 * 1000 });
+    } else {
+      // Cache valid result for 1 minute
+      pageCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
+    }
+  } catch (err) {
+    console.error(
+      `Error refreshing cache f
+      or subdomain "${subdomain}":`,
+      err
+    );
+  }
 }

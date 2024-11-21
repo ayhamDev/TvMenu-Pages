@@ -1,6 +1,6 @@
 import React from "react";
 
-const layout = ({ children }: React.PropsWithChildren) => {
+const layout = async ({ children }: React.PropsWithChildren) => {
   return children;
 };
 

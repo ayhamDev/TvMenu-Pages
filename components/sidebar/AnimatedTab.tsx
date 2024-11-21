@@ -1,5 +1,5 @@
-import React from "react";
 import { motion } from "framer-motion";
+import React from "react";
 
 const AnimatedTab = (Component: React.ComponentType) => {
   return () => (
@@ -14,5 +14,6 @@ const AnimatedTab = (Component: React.ComponentType) => {
     </motion.div>
   );
 };
+AnimatedTab.displayName = "AnimatedTab";
 
 export default AnimatedTab;

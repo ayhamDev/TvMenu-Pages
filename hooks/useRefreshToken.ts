@@ -41,7 +41,11 @@ const useRefreshToken = (user: IUser) => {
       async (error) => {
         if (error instanceof AxiosError) {
           const originalRequest = error.config;
-          if (error.response?.status === 401 && originalRequest) {
+          if (
+            error.response?.status === 401 &&
+            originalRequest &&
+            typeof originalRequest?.headers?.Authorization == "string"
+          ) {
             const results =
               originalRequest?.headers?.Authorization?.match(/^Bearer\s(.+)$/);
 

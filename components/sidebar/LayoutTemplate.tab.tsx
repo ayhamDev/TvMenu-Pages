@@ -1,12 +1,9 @@
-import React, { useState } from "react";
-import AnimatedTab from "./AnimatedTab";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { templates } from "../TemplateSelector";
-import { Label } from "../ui/label";
-import { Button } from "../ui/button";
-import { ScrollArea } from "../ui/scroll-area";
-import { Check, CheckCircle, CheckCircle2 } from "lucide-react";
+import { useState } from "react";
 import TemplateItem from "../TemplateItem";
+import { templates } from "../TemplateSelector";
+import { Button } from "../ui/button";
+import { RadioGroup } from "../ui/radio-group";
+import AnimatedTab from "./AnimatedTab";
 import SidebarContent from "./SidebarContent";
 
 const LayoutTemplateTab = () => {

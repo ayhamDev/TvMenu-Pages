@@ -16,13 +16,13 @@ import {
   Utensils,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import AvatarMenu from "./AvatarMenu";
 import { Button } from "./ui/button";
 
 import useRefreshToken from "@/hooks/useRefreshToken";
 import { IUser } from "@/interface/User.interface";
+import { useQueryState } from "nuqs";
 import AnimatedPage from "./AnimatedPage";
 import LayoutTab from "./sidebar/Layout.tab";
 import LayoutTemplateTab from "./sidebar/LayoutTemplate.tab";
@@ -38,8 +38,6 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "./ui/sidebar";
-import { parseAsString, useQueryState } from "nuqs";
-import { Skeleton } from "./ui/skeleton";
 
 type TabType = "Template" | "Layout" | "Menu" | "Style" | "Settings";
 
@@ -48,7 +46,7 @@ interface IPageEditor {
 }
 
 const PageEditor = ({ user }: IPageEditor) => {
-  const { InitalLoginState } = useRefreshToken(user);
+  useRefreshToken(user);
   const { toast } = useToast();
 
   // Use useQueryState to manage the 'tab' query param

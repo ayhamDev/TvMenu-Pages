@@ -3,7 +3,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sidebar,
@@ -14,14 +13,14 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { IUser } from "@/interface/User.interface";
 import { cn } from "@/lib/utils";
-import { RadioGroup, RadioGroupItem } from "@radix-ui/react-radio-group";
+import { RadioGroup } from "@radix-ui/react-radio-group";
 import { Monitor, Smartphone } from "lucide-react";
 import { useState } from "react";
 import AvatarMenu from "./AvatarMenu";
-import TemplateSidebarTrigger from "./TemplateSidebarTrigger";
 import TemplateItem from "./TemplateItem";
-import { IUser } from "@/interface/User.interface";
+import TemplateSidebarTrigger from "./TemplateSidebarTrigger";
 export const templates = [
   {
     id: "menu1",
@@ -96,7 +95,7 @@ const TemplateSelector = ({ user }: { user: IUser }) => {
   return (
     <SidebarProvider
       style={{
-        // @ts-ignore
+        // @ts-expect-error
         "--sidebar-width": "350px",
       }}
     >
