@@ -18,17 +18,17 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 import AvatarMenu from "./AvatarMenu";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 
 import useRefreshToken from "@/hooks/useRefreshToken";
 import { IUser } from "@/interface/User.interface";
 import { useQueryState } from "nuqs";
 import AnimatedPage from "./AnimatedPage";
-import LayoutTab from "./sidebar/Layout.tab";
-import LayoutTemplateTab from "./sidebar/LayoutTemplate.tab";
-import MenuTab from "./sidebar/Menu.tab";
-import SettingsTab from "./sidebar/Settings.tab";
-import StyleTab from "./sidebar/Style.tab";
+import LayoutTab from "../sidebar/Layout.tab";
+import LayoutTemplateTab from "../sidebar/LayoutTemplate.tab";
+import MenuTab from "../sidebar/Menu.tab";
+import SettingsTab from "../sidebar/Settings.tab";
+import StyleTab from "../sidebar/Style.tab";
 import {
   Sidebar,
   SidebarContent,
@@ -37,7 +37,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "./ui/sidebar";
+} from "../ui/sidebar";
 
 type TabType = "Template" | "Layout" | "Menu" | "Style" | "Settings";
 
@@ -162,7 +162,6 @@ const PageEditor = ({ user }: IPageEditor) => {
   //     </SidebarProvider>
   //   );
   // }
-
   return (
     <AnimatedPage>
       <SidebarProvider defaultOpen={false}>

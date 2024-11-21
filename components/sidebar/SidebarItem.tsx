@@ -15,9 +15,11 @@ const SidebarItem = ({
       )}
       {...props}
     >
-      <h4 className="scroll-m-20 text-lg font-semibold tracking-tight">
-        {title}
-      </h4>
+      {title && (
+        <h4 className="scroll-m-20 text-lg font-semibold tracking-tight">
+          {title}
+        </h4>
+      )}
       {children}
     </div>
   );

@@ -1,5 +1,5 @@
-import { TailwindIndicator } from "@/components/tailwind-indicator";
-import { ThemeProvider } from "@/components/theme-provider";
+import { TailwindIndicator } from "@/components/other/tailwind-indicator";
+import { ThemeProvider } from "@/components/other/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/lib/fonts";

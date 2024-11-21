@@ -3,7 +3,7 @@ import { FindPage } from "./utils/FindPage";
 
 const PUBLIC_FILE = /\.(.*)$/; // Files
 
-const pageCache = new Map();
+const DomainCache = new Map();
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
@@ -25,15 +25,12 @@ export async function middleware(request: NextRequest) {
     subdomain !== "api"
   ) {
     // Check the cache
-    const cachedResult = pageCache.get(subdomain);
+    const cachedResult = DomainCache.get(subdomain);
     if (cachedResult && cachedResult.expires > Date.now()) {
       // Serve the cached response if available
       if (cachedResult.page) {
         const req = NextResponse.rewrite(
-          new URL(
-            `/client/${subdomain}${request.nextUrl.pathname}`,
-            request.url
-          )
+          new URL(`/pages/${subdomain}${request.nextUrl.pathname}`, request.url)
         );
         req.headers.set("X-Url", request.url);
 
@@ -51,14 +48,14 @@ export async function middleware(request: NextRequest) {
 
     if (!page || (error?.response && error?.response?.status >= 201)) {
       // Cache the "not found" state and respond with an error
-      // pageCache.set(subdomain, { page: null, expires: Date.now() + 60 * 1000 });
+      DomainCache.delete(subdomain);
       return NextResponse.error();
     }
 
     // Cache the valid result and serve the response
-    pageCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
+    DomainCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
     const req = NextResponse.rewrite(
-      new URL(`/client/${subdomain}${request.nextUrl.pathname}`, request.url)
+      new URL(`/pages/${subdomain}${request.nextUrl.pathname}`, request.url)
     );
     req.headers.set("X-Url", request.url);
 
@@ -74,16 +71,15 @@ async function refreshCache(subdomain: string) {
     const [page, error] = await FindPage(subdomain);
     if (!page || (error?.response && error?.response?.status >= 201)) {
       // Cache "not found" for 1 minute
-      pageCache.set(subdomain, { page: null, expires: Date.now() + 60 * 1000 });
+      DomainCache.set(subdomain, {
+        page: null,
+        expires: Date.now() + 60 * 1000,
+      });
     } else {
       // Cache valid result for 1 minute
-      pageCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
+      DomainCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
     }
   } catch (err) {
-    console.error(
-      `Error refreshing cache f
-      or subdomain "${subdomain}":`,
-      err
-    );
+    console.error(`Error refreshing cache for subdomain "${subdomain}":`, err);
   }
 }

@@ -12,8 +12,8 @@ import useAuth from "@/hooks/useAuth";
 import { IUser } from "@/interface/User.interface";
 import { LayoutDashboard, LogOut, User2 } from "lucide-react";
 import { useState } from "react";
-import { Separator } from "./ui/separator";
-import { Skeleton } from "./ui/skeleton";
+import { Separator } from "../ui/separator";
+import { Skeleton } from "../ui/skeleton";
 
 interface AvatarMenuProps {
   user: IUser;

@@ -13,7 +13,7 @@ const ChangesHandler = ({ ShowChangeActions }: IChangesHandlerProps) => {
       <motion.div
         initial={{ y: 80, opacity: 0.5 }}
         animate={ShowChangeActions ? "visable" : "hidden"}
-        transition={{ duration: 0.2, ease: "easeInOut" }}
+        transition={{ duration: 0.2, ease: "circInOut" }}
         variants={{
           hidden: {
             y: 80,

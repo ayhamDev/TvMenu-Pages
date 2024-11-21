@@ -1,6 +1,6 @@
 import { useState } from "react";
-import TemplateItem from "../TemplateItem";
-import { templates } from "../TemplateSelector";
+import TemplateItem from "../other/TemplateItem";
+import { templates } from "../other/TemplateSelector";
 import { Button } from "../ui/button";
 import { RadioGroup } from "../ui/radio-group";
 import AnimatedTab from "./AnimatedTab";

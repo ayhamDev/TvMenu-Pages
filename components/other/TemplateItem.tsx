@@ -1,8 +1,8 @@
 import React from "react";
 import { templates } from "./TemplateSelector";
-import { RadioGroupItem } from "./ui/radio-group";
+import { RadioGroupItem } from "../ui/radio-group";
 import { CheckCircle2 } from "lucide-react";
-import { Label } from "./ui/label";
+import { Label } from "../ui/label";
 
 const TemplateItem = ({ template }: { template: (typeof templates)[0] }) => {
   return (

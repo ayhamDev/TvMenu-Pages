@@ -11,10 +11,12 @@ import AnimatedTab from "./AnimatedTab";
 import ChangesHandler from "./ChangesHandler";
 import SidebarContent from "./SidebarContent";
 import SidebarItem from "./SidebarItem";
+import useAuth from "@/hooks/useAuth";
 
 const SettingsTab = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [SiteVisable, SetSiteVisable] = useState<boolean>(true);
+  const { admin } = useAuth();
   useEffect(() => {
     setTimeout(() => {
       SetShowChangeActions(true);
@@ -85,48 +87,50 @@ const SettingsTab = () => {
               <Switch checked={SiteVisable} onCheckedChange={SetSiteVisable} />
             </div>
           </SidebarItem>
-          <SidebarItem title={`DNS`}>
-            <Tabs className="w-full" defaultValue="defualt">
-              <TabsList className="w-full">
-                <TabsTrigger className="w-full" value="defualt">
-                  Default
-                </TabsTrigger>
-                <TabsTrigger className="w-full" value="custom" disabled>
-                  Custom
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="defualt" className="mt-4">
-                <div className="flex items-center">
-                  <Input
-                    className="rounded-r-none pr-0"
-                    placeholder="e.g. coffee-master"
-                  />
-                  <div className="h-[40px] text-nowrap flex justify-start items-center px-3 bg-background rounded-r-sm text-muted-foreground border border-l-0 select-none">
-                    .{process.env.NEXT_PUBLIC_DOMAIN}
+          {admin.accessToken && (
+            <SidebarItem title={`DNS`} className="opacity-40">
+              <Tabs className="w-full" defaultValue="defualt">
+                <TabsList className="w-full">
+                  <TabsTrigger className="w-full" value="defualt">
+                    Default
+                  </TabsTrigger>
+                  <TabsTrigger className="w-full" value="custom" disabled>
+                    Custom
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="defualt" className="mt-4">
+                  <div className="flex items-center">
+                    <Input
+                      className="rounded-r-none pr-0"
+                      placeholder="e.g. coffee-master"
+                    />
+                    <div className="h-[40px] text-nowrap flex justify-start items-center px-3 bg-background rounded-r-sm text-muted-foreground border border-l-0 select-none">
+                      .{process.env.NEXT_PUBLIC_DOMAIN}
+                    </div>
                   </div>
-                </div>
-                <p className="text-xs text-muted-foreground text-red-400 mt-2 ">
-                  DNS has been Verifed
-                </p>
-              </TabsContent>
-              <TabsContent value="custom" className="mt-4">
-                <p className="text-muted-foreground text-xs mb-2">
-                  Custom Domain Is Optional
-                </p>
+                  <p className="text-xs text-muted-foreground text-red-400 mt-2 ">
+                    DNS has been Verifed
+                  </p>
+                </TabsContent>
+                <TabsContent value="custom" className="mt-4">
+                  <p className="text-muted-foreground text-xs mb-2">
+                    Custom Domain Is Optional
+                  </p>
 
-                <div className="flex items-center">
-                  <Input
-                    className="rounded-r-none"
-                    placeholder="e.g. coffee-master.com"
-                  />
-                  <Button className="rounded-l-none">Verify</Button>
-                </div>
-                <p className="text-xs text-muted-foreground text-red-400 mt-2">
-                  DNS has been Verifed
-                </p>
-              </TabsContent>
-            </Tabs>
-          </SidebarItem>
+                  <div className="flex items-center">
+                    <Input
+                      className="rounded-r-none"
+                      placeholder="e.g. coffee-master.com"
+                    />
+                    <Button className="rounded-l-none">Verify</Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground text-red-400 mt-2">
+                    DNS has been Verifed
+                  </p>
+                </TabsContent>
+              </Tabs>
+            </SidebarItem>
+          )}
         </div>
       </SidebarContent>
       <ChangesHandler

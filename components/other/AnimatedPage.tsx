@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 import React from "react";
 
-const PageWrapper = ({ children }: React.PropsWithChildren) => {
+const AnimatePage = ({ children }: React.PropsWithChildren) => {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.985 }}
@@ -15,4 +15,4 @@ const PageWrapper = ({ children }: React.PropsWithChildren) => {
   );
 };
 
-export default PageWrapper;
+export default AnimatePage;

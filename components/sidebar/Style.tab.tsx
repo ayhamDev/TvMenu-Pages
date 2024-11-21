@@ -1,13 +1,27 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import AnimatedTab from "./AnimatedTab";
+import SidebarContent from "./SidebarContent";
+import { cn } from "@/lib/utils";
+import ChangesHandler from "./ChangesHandler";
 
 const StyleTab = () => {
+  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
+  const [SiteVisable, SetSiteVisable] = useState<boolean>(true);
+  useEffect(() => {
+    setTimeout(() => {
+      SetShowChangeActions(true);
+    }, 1000);
+  }, []);
   return (
-    <div>
-      <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">
-        Styles
-      </h3>
-    </div>
+    <>
+      <SidebarContent
+        className={cn(ShowChangeActions ? "pb-20" : "mb-0")}
+      ></SidebarContent>
+      <ChangesHandler
+        ShowChangeActions={ShowChangeActions}
+        SetShowChangeActions={SetShowChangeActions}
+      />
+    </>
   );
 };
 

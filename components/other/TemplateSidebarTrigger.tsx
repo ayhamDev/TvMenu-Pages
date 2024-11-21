@@ -1,6 +1,6 @@
 import { Menu } from "lucide-react";
-import { Button } from "./ui/button";
-import { useSidebar } from "./ui/sidebar";
+import { Button } from "../ui/button";
+import { useSidebar } from "../ui/sidebar";
 
 const TemplateSidebarTrigger = () => {
   const { setOpenMobile } = useSidebar();

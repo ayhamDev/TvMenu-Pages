@@ -1,7 +1,7 @@
 import React from "react";
 
 const layout = async ({ children }: React.PropsWithChildren) => {
-  return children;
+  return <div className="w-screen h-screen bg-offbackground">{children}</div>;
 };
 
 export default layout;
