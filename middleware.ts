@@ -1,85 +1,120 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FindPage } from "./utils/FindPage";
 
-const PUBLIC_FILE = /\.(.*)$/; // Files
-
-const DomainCache = new Map();
+const PUBLIC_FILE = /\.(.*)$/;
+const CACHE_TTL = 1000 * 60 * 60; // Cache TTL in milliseconds (1 hour)
+const DomainCache = new Map<string, { page: any; expires: number }>();
 
 export async function middleware(request: NextRequest) {
   const host = request.headers.get("host") || "";
   const { hostname } = new URL(`http://${host}`);
+
   const domainParts = hostname.split(".");
   const subdomain = domainParts.length > 2 ? domainParts[0] : null;
-  const rootDomain = domainParts.slice(domainParts.length - 2).join(".");
+  const rootDomain = domainParts.slice(-2).join(".");
 
   const url = request.nextUrl.clone();
+
+  // Skip public/static files and Next.js internals
   if (PUBLIC_FILE.test(url.pathname) || url.pathname.includes("_next")) {
     return NextResponse.next();
   }
 
+  // Redirect `/edit` to `/edit/menu`
+  if (url.pathname === "/edit") {
+    url.pathname = "/edit/menu";
+    return NextResponse.redirect(url);
+  }
+
+  // Handle subdomain-based routing
   if (
     subdomain &&
     rootDomain === process.env.NEXT_PUBLIC_DOMAIN &&
-    subdomain !== "menuone" &&
-    subdomain !== "www" &&
-    subdomain !== "api"
+    !["menuone", "www", "api"].includes(subdomain)
   ) {
-    // Check the cache
-    const cachedResult = DomainCache.get(subdomain);
-    if (cachedResult && cachedResult.expires > Date.now()) {
-      // Serve the cached response if available
+    if (url.pathname == "/cache-invalid") return InvalidateCache(subdomain);
+    const cachedResult = await getCachedDomain(subdomain);
+    if (cachedResult) {
       if (cachedResult.page) {
-        const req = NextResponse.rewrite(
-          new URL(`/pages/${subdomain}${request.nextUrl.pathname}`, request.url)
-        );
-        req.headers.set("X-Url", request.url);
-
-        // Update the cache in the background
-        refreshCache(subdomain);
-        return req;
+        return createRewriteResponse(subdomain, request);
       } else {
-        // If cached as "not found," immediately respond with an error
-        return NextResponse.error();
+        return NextResponse.error(); // Cached as "not found"
       }
     }
 
-    // If no valid cache, fetch the page
+    // Fetch and cache if not in cache
     const [page, error] = await FindPage(subdomain);
 
     if (!page || (error?.response && error?.response?.status >= 201)) {
-      // Cache the "not found" state and respond with an error
-      DomainCache.delete(subdomain);
+      cacheDomain(subdomain, null); // Cache "not found"
       return NextResponse.error();
     }
 
-    // Cache the valid result and serve the response
-    DomainCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
-    const req = NextResponse.rewrite(
-      new URL(`/pages/${subdomain}${request.nextUrl.pathname}`, request.url)
-    );
-    req.headers.set("X-Url", request.url);
-
-    return req;
+    cacheDomain(subdomain, page.data);
+    return createRewriteResponse(subdomain, request);
   }
 
   return NextResponse.next();
 }
 
-// Function to refresh the cache asynchronously
+async function InvalidateCache(subdomain: string) {
+  if (DomainCache.has(subdomain)) {
+    DomainCache.delete(subdomain);
+  }
+
+  return NextResponse.json(
+    {
+      message: "Dns Cache Invalidated Successfully.",
+      statuCode: 200,
+    },
+    {
+      status: 200,
+      statusText: "ok",
+    }
+  );
+}
+// Helper to get cached domain and check expiration
+async function getCachedDomain(subdomain: string) {
+  let cached = DomainCache.get(subdomain);
+
+  if (cached && cached.expires > Date.now()) return cached;
+
+  DomainCache.delete(subdomain); // Remove expired cache
+  await refreshCache(subdomain); // Refresh cache asynchronously
+  cached = DomainCache.get(subdomain);
+  if (cached && cached.expires > Date.now()) return cached;
+  return null;
+}
+
+// Helper to cache domain data
+function cacheDomain(subdomain: string, page: any) {
+  DomainCache.set(subdomain, {
+    page,
+    expires: Date.now() + CACHE_TTL,
+  });
+}
+
+// Helper to refresh cache asynchronously
 async function refreshCache(subdomain: string) {
   try {
     const [page, error] = await FindPage(subdomain);
-    if (!page || (error?.response && error?.response?.status >= 201)) {
-      // Cache "not found" for 1 minute
-      DomainCache.set(subdomain, {
-        page: null,
-        expires: Date.now() + 60 * 1000,
-      });
+
+    // @ts-expect-error
+    if (page && (!error || error?.response?.status < 201)) {
+      cacheDomain(subdomain, page.data);
     } else {
-      // Cache valid result for 1 minute
-      DomainCache.set(subdomain, { page, expires: Date.now() + 60 * 1000 });
+      cacheDomain(subdomain, null); // Cache as "not found"
     }
   } catch (err) {
     console.error(`Error refreshing cache for subdomain "${subdomain}":`, err);
   }
+}
+
+// Helper to create a rewrite response
+function createRewriteResponse(subdomain: string, request: NextRequest) {
+  const req = NextResponse.rewrite(
+    new URL(`/${subdomain}${request.nextUrl.pathname}`, request.url)
+  );
+  req.headers.set("X-Url", request.url);
+  return req;
 }

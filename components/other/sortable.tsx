@@ -37,6 +37,7 @@ import { Slot, type SlotProps } from "@radix-ui/react-slot";
 import { composeRefs } from "@/lib/compose-refs";
 import { cn } from "@/lib/utils";
 import { Button, type ButtonProps } from "@/components/ui/button";
+import { log } from "console";
 
 const orientationConfig = {
   vertical: {
@@ -133,8 +134,9 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
   orientation = "vertical",
   overlay,
   children,
+  disabled = false,
   ...props
-}: SortableProps<TData>) {
+}: SortableProps<TData> & { disabled?: boolean }) {
   const [activeId, setActiveId] = React.useState<UniqueIdentifier | null>(null);
   const sensors = useSensors(
     useSensor(MouseSensor),
@@ -166,7 +168,11 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
       collisionDetection={collisionDetection}
       {...props}
     >
-      <SortableContext items={value} strategy={strategy ?? config.strategy}>
+      <SortableContext
+        disabled={disabled}
+        items={value}
+        strategy={strategy ?? config.strategy}
+      >
         {children}
       </SortableContext>
       {overlay ? (

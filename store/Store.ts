@@ -1,13 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import AdminAuthSlice from "./slice/AdminAuthSlice";
 import ClientAuthSlice from "./slice/ClientAuthSlice";
-import Page from "./slice/Page";
+import BreadcrumpsSlice from "./slice/BreadcrumpsSlice";
 
 export const store = configureStore({
   reducer: {
     clientAuth: ClientAuthSlice,
     adminAuth: AdminAuthSlice,
-    Page: Page,
+    BreadcrumpsSlice: BreadcrumpsSlice,
   },
 });
 

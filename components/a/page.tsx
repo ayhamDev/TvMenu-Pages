@@ -3,8 +3,8 @@ import { HasSession } from "@/utils/HasSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";
 import { cookies } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { IClientPageProps } from "../../page";
 import { Metadata } from "next";
+import { IClientPageProps } from "@/app/[domain]/page";
 
 export async function generateMetadata({
   params,

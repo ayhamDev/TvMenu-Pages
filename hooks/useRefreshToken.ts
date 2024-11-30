@@ -18,9 +18,11 @@ const useRefreshToken = (user: IUser) => {
     ClientLogOut,
   } = useAuth();
 
-  const [InitalLoginState, SetInitalLoginState] = useState<
-    "loading" | "done"
-  >();
+  const [InitalLoginState, SetInitalLoginState] = useState<{
+    client: boolean;
+    admin: boolean;
+  }>({ admin: false, client: false });
+
   useLayoutEffect(() => {
     const requestInterceptor = api.interceptors.request.use(
       (config) => {
@@ -85,34 +87,43 @@ const useRefreshToken = (user: IUser) => {
   }, [admin, client]);
 
   useEffect(() => {
-    // Check if admin or client user is not authenticated
     const fetchNewTokenIfUnauthenticated = async () => {
-      if (user.Role == "Admin" && !admin.accessToken) {
-        const [res, error] = await CleanPromise(RefreshToken("Admin"));
-
-        if (res?.data?.Token) {
-          AdminLoginWithToken(res.data.Token);
-          console.log("Admin token refreshed on page load");
-        } else if (error) {
-          AdminLogOut();
-        }
-      }
-
       if (user.Role == "Client" && !client.accessToken) {
-        const [res, error] = await CleanPromise(RefreshToken("Client"));
-        if (res?.data?.Token) {
-          ClientLoginWithToken(res.data.Token);
+        const [ClientRes, ClientError] = await CleanPromise(
+          RefreshToken("Client")
+        );
+        if (ClientRes?.data?.Token) {
+          ClientLoginWithToken(ClientRes.data.Token);
           console.log("Client token refreshed on page load");
-        } else if (error) {
+        } else if (ClientError) {
           ClientLogOut();
         }
       }
-      SetInitalLoginState("done");
+      SetInitalLoginState((prev) => ({ ...prev, client: true }));
+    };
+    fetchNewTokenIfUnauthenticated();
+  }, [client, user]);
+  useEffect(() => {
+    // Check if admin or client user is not authenticated
+    const fetchNewTokenIfUnauthenticated = async () => {
+      if (user.Role == "Admin" && !admin.accessToken) {
+        const [AdminRes, AdminError] = await CleanPromise(
+          RefreshToken("Admin")
+        );
+        if (AdminRes?.data?.Token) {
+          AdminLoginWithToken(AdminRes.data.Token);
+          console.log("Admin token refreshed on page load");
+        } else if (AdminError) {
+          AdminLogOut();
+        }
+      }
+      SetInitalLoginState((prev) => ({ ...prev, admin: true }));
     };
 
     fetchNewTokenIfUnauthenticated();
-  }, [admin, client]);
-  return { InitalLoginState, api };
+  }, [admin, user]);
+
+  return { InitalLoginState };
 };
 
 export default useRefreshToken;

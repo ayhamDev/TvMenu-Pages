@@ -1,31 +1,35 @@
-import { cn } from "@/lib/utils";
-import { Globe, Lock } from "lucide-react";
-import { useEffect, useState } from "react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
-import { Switch } from "../ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { Textarea } from "../ui/textarea";
-import AnimatedTab from "./AnimatedTab";
-import ChangesHandler from "./ChangesHandler";
-import SidebarContent from "./SidebarContent";
-import SidebarItem from "./SidebarItem";
+"use client";
+import SidebarContentTitle from "@/components/other/SidebarContentTitle";
+import AnimatedTab from "@/components/sidebar/AnimatedTab";
+import SidebarContent from "@/components/sidebar/SidebarContent";
+import SidebarItem from "@/components/sidebar/SidebarItem";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import useAuth from "@/hooks/useAuth";
+import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import { Globe, Lock } from "lucide-react";
+import { useState } from "react";
 
-const SettingsTab = () => {
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
+const page = () => {
   const [SiteVisable, SetSiteVisable] = useState<boolean>(true);
   const { admin } = useAuth();
 
-  useEffect(() => {
-    setTimeout(() => {
-      SetShowChangeActions(true);
-    }, 1000);
-  }, []);
+  useBreadcrumbs([
+    {
+      href: "/edit/settings",
+      label: "Settings",
+    },
+  ]);
+
   return (
     <>
-      <SidebarContent className={cn(ShowChangeActions ? "pb-20" : "mb-0")}>
+      <SidebarContentTitle>Settings</SidebarContentTitle>
+
+      <SidebarContent>
         <div className="flex flex-col gap-5">
           <SidebarItem title="Site Details">
             <div className="flex flex-col gap-2">
@@ -89,7 +93,7 @@ const SettingsTab = () => {
             </div>
           </SidebarItem>
           {admin.accessToken && (
-            <SidebarItem title={`DNS`} className="opacity-40">
+            <SidebarItem title={`DNS`}>
               <Tabs className="w-full" defaultValue="defualt">
                 <TabsList className="w-full">
                   <TabsTrigger className="w-full" value="defualt">
@@ -134,12 +138,14 @@ const SettingsTab = () => {
           )}
         </div>
       </SidebarContent>
-      <ChangesHandler
-        ShowChangeActions={ShowChangeActions}
-        SetShowChangeActions={SetShowChangeActions}
-      />
+      <footer className="w-full px-4 py-4 bg-background border-t-2 flex  gap-4">
+        <Button className="w-full" variant={"secondary"}>
+          Cancel
+        </Button>
+        <Button className="w-full">Publish</Button>
+      </footer>
     </>
   );
 };
 
-export default AnimatedTab(SettingsTab);
+export default AnimatedTab(page);

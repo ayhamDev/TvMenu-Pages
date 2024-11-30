@@ -1,10 +1,12 @@
-import { Apple, EllipsisVertical, Menu, Plus } from "lucide-react";
+import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import { motion } from "framer-motion";
+import { Apple, Menu, Plus } from "lucide-react";
+import { useEffect, useLayoutEffect } from "react";
+import { Sortable, SortableDragHandle, SortableItem } from "../other/sortable";
 import { Button } from "../ui/button";
 import AnimatedTab from "./AnimatedTab";
 import SidebarContent from "./SidebarContent";
 import SidebarItem from "./SidebarItem";
-import { Sortable, SortableDragHandle, SortableItem } from "../other/sortable";
-import { motion } from "framer-motion";
 
 const MenuTab = () => {
   const fields = [
@@ -21,13 +23,14 @@ const MenuTab = () => {
       name: "launch",
     },
   ];
+
   return (
     <>
       <SidebarContent className="mb-16">
         <Sortable value={fields}>
           <div className="flex flex-col gap-4">
             {fields.map((item) => (
-              <SortableItem key={item.id} value={item.id} className="group">
+              <SortableItem key={item.id} value={item.id} className="group ">
                 <SidebarItem className="flex-row justify-between items-center overflow-hidden relative select-none cursor-pointer">
                   <motion.div
                     className="flex items-center absolute inset-0"

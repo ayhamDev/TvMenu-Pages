@@ -1,13 +1,16 @@
 import EditPageButton from "@/components/other/EditPageButton";
 import { HasSession } from "@/utils/HasSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";
+import { Metadata } from "next";
 import { cookies } from "next/headers";
 
 export interface IClientPageProps {
   params: Promise<{ domain: string }>;
 }
 
-export async function generateMetadata({ params }: IClientPageProps) {
+export async function generateMetadata({
+  params,
+}: IClientPageProps): Promise<Metadata> {
   const props = await params;
 
   return {
