@@ -7,7 +7,9 @@ import { cn } from "@/lib/utils";
 import ReduxProvider from "@/store/Provider";
 import type { Metadata, Viewport } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./globals.css";
+import { ReactQueryClientProvider } from "@/components/other/ReactQueryClientProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -41,13 +43,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
-          <ReduxProvider>
-            <ThemeProvider attribute="class" defaultTheme="dark">
-              <NuqsAdapter>{children}</NuqsAdapter>
-              <TailwindIndicator />
-            </ThemeProvider>
-            <Toaster />
-          </ReduxProvider>
+          <ReactQueryClientProvider>
+            <ReduxProvider>
+              <ThemeProvider attribute="class" defaultTheme="dark">
+                <NuqsAdapter>{children}</NuqsAdapter>
+                <TailwindIndicator />
+              </ThemeProvider>
+              <Toaster />
+            </ReduxProvider>
+          </ReactQueryClientProvider>
         </body>
       </html>
     </>

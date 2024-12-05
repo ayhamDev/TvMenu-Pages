@@ -1,6 +1,6 @@
 import { AxiosError, AxiosResponse } from "axios";
-import api from "./Api";
-import { CleanPromise } from "./CleanPromise";
+import { CleanPromise } from "@/utils/CleanPromise";
+import api from "@/utils/Api";
 
 export const FindPage = async (domain: string) => {
   return CleanPromise<

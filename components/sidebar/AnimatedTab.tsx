@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import React from "react";
 
 const AnimatedTab = (Component: React.ComponentType) => {
@@ -6,7 +6,6 @@ const AnimatedTab = (Component: React.ComponentType) => {
     <motion.div
       initial={{ opacity: 0.1, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0.1, y: 30 }}
       transition={{ duration: 0.2 }}
       className="flex-1 flex flex-col overflow-hidden relative"
     >

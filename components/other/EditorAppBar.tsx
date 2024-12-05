@@ -54,7 +54,7 @@ const EditorAppBar = ({ user }: { user: IUser }) => {
       <div className="min-w-[200px]">
         <EditorBreadcrumb
           links={[...breadcrumbs]}
-          maxItems={IsMobile ? 3 : 4}
+          maxItems={IsMobile ? 3 : 5}
         />
       </div>
       <div className="flex gap-6 items-center justify-center ml-auto">

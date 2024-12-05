@@ -118,3 +118,7 @@ button {
 div[style="min-width:100%;display:table"] {
   height: 100%;
 }
+
+ol {
+  gap: 15px;
+}

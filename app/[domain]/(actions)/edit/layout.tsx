@@ -9,6 +9,18 @@ import { AnimatePresence } from "framer-motion";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
+import { IClientPageProps } from "../../page";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: IClientPageProps): Promise<Metadata> {
+  const props = await params;
+
+  return {
+    title: `Edit ${(await params).domain}`,
+  };
+}
 
 const layout = async ({
   children,

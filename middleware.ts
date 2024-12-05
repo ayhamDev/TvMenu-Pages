@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { FindPage } from "./utils/FindPage";
+import { FindPage } from "./utils/api/common/FindPage";
 
 const PUBLIC_FILE = /\.(.*)$/;
 const CACHE_TTL = 1000 * 60 * 60; // Cache TTL in milliseconds (1 hour)
@@ -19,7 +19,6 @@ export async function middleware(request: NextRequest) {
   if (PUBLIC_FILE.test(url.pathname) || url.pathname.includes("_next")) {
     return NextResponse.next();
   }
-
   // Redirect `/edit` to `/edit/menu`
   if (url.pathname === "/edit") {
     url.pathname = "/edit/menu";
@@ -34,7 +33,11 @@ export async function middleware(request: NextRequest) {
   ) {
     if (url.pathname == "/cache-invalid") return InvalidateCache(subdomain);
     const cachedResult = await getCachedDomain(subdomain);
+
     if (cachedResult) {
+      if (cachedResult.expires >= Date.now()) {
+        refreshCache(subdomain);
+      }
       if (cachedResult.page) {
         return createRewriteResponse(subdomain, request);
       } else {
@@ -44,13 +47,14 @@ export async function middleware(request: NextRequest) {
 
     // Fetch and cache if not in cache
     const [page, error] = await FindPage(subdomain);
+    console.log(error);
 
     if (!page || (error?.response && error?.response?.status >= 201)) {
-      cacheDomain(subdomain, null); // Cache "not found"
+      DomainCache.delete(subdomain);
       return NextResponse.error();
     }
 
-    cacheDomain(subdomain, page.data);
+    cacheDomain(subdomain, true);
     return createRewriteResponse(subdomain, request);
   }
 
@@ -101,9 +105,9 @@ async function refreshCache(subdomain: string) {
 
     // @ts-expect-error
     if (page && (!error || error?.response?.status < 201)) {
-      cacheDomain(subdomain, page.data);
+      cacheDomain(subdomain, true);
     } else {
-      cacheDomain(subdomain, null); // Cache as "not found"
+      DomainCache.delete(subdomain); // Cache as "not found"
     }
   } catch (err) {
     console.error(`Error refreshing cache for subdomain "${subdomain}":`, err);

@@ -1,7 +1,9 @@
+import useAuth from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { Globe, Lock } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
+import { Form } from "../ui/form";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
@@ -11,7 +13,8 @@ import AnimatedTab from "./AnimatedTab";
 import ChangesHandler from "./ChangesHandler";
 import SidebarContent from "./SidebarContent";
 import SidebarItem from "./SidebarItem";
-import useAuth from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
 
 const SettingsTab = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);

@@ -28,7 +28,7 @@ const page = () => {
         <RadioGroup
           value={selectedTemplate}
           onValueChange={handleTemplateSelect}
-          className="grid grid-cols-2 gap-4 my-4 px-4 mb-4"
+          className="grid grid-cols-2 gap-4 my-4 px-2 mb-4"
         >
           {templates.map((template) => (
             <TemplateItem template={template} key={template.id} />

@@ -31,18 +31,19 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import { ICategory } from "@/interface/Category,interface";
 import { IMenu } from "@/interface/Menu.interface";
 import { CategoryApi } from "@/utils/api/category";
-import { MenuApi } from "@/utils/api/menu";
+import { MenuItemApi } from "@/utils/api/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Menu, Plus } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
-export const CreateCategorySchema = z.object({
+export const CreateItemSchema = z.object({
   title: z
     .string()
     .max(60, {
@@ -55,18 +56,32 @@ export const CreateCategorySchema = z.object({
 
 const page = () => {
   const router = useRouter();
-  const params = useParams<{ domain: string; menuId: string }>();
-
+  const params = useParams<{
+    domain: string;
+    menuId: string;
+    categoryId: string;
+  }>();
+  const searchParams = useSearchParams();
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
   const qc = useQueryClient();
 
-  const QueryKey = ["page", params.domain, "menu", params.menuId, "category"];
-  const { data, error, isLoading } = useQuery<IMenu>({
+  const QueryKey = [
+    "page",
+    params.domain,
+    "menu",
+    params.menuId,
+    "category",
+    params.categoryId,
+    "item",
+  ];
+  const { data, error, isLoading } = useQuery<ICategory>({
     queryKey: QueryKey,
-    queryFn: () => MenuApi.GetCategories(params.domain, params.menuId),
+    queryFn: () =>
+      CategoryApi.FindOne(params.domain, params.categoryId, ["item", "menu"]),
     retry: 1,
   });
+
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -78,37 +93,56 @@ const page = () => {
       isLoading: true,
     },
     {
-      href: "#",
+      href: `/edit/menu/${params.menuId}/category`,
       label: "Categories",
+    },
+    {
+      href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+      label: "",
+      isLoading: true,
+    },
+    {
+      href: "#",
+      label: "Items",
     },
   ]);
   const form = useForm({
-    resolver: zodResolver(CreateCategorySchema),
+    resolver: zodResolver(CreateItemSchema),
     defaultValues: {
       title: "",
     },
   });
 
   useLayoutEffect(() => {
-    const menu = qc.getQueryData<IMenu | undefined>([
+    const category = qc.getQueryData<ICategory | undefined>([
       "page",
       params.domain,
       "menu",
       params.menuId,
+      "category",
+      params.categoryId,
     ]);
-    if (menu) {
+    if (category) {
       updateBreadcrumbs([
         {
           href: "/edit/menu",
           label: "Menu",
         },
         {
-          href: `/edit/menu/${params.menuId}`,
-          label: menu.title,
+          href: `/edit/menu/${category.menuId}`,
+          label: category?.menu?.title,
+        },
+        {
+          href: `/edit/menu/${category.menuId}/category`,
+          label: "Categories",
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category/${category.id}`,
+          label: category?.title,
         },
         {
           href: "#",
-          label: "Categories",
+          label: "Items",
         },
       ]);
     }
@@ -116,30 +150,37 @@ const page = () => {
 
   useEffect(() => {
     if (data) {
-      console.log(data);
       updateBreadcrumbs([
         {
           href: "/edit/menu",
           label: "Menu",
         },
         {
-          href: `/edit/menu/${params.menuId}`,
-          label: data.title,
+          href: `/edit/menu/${data.menuId}`,
+          label: data?.menu?.title,
+        },
+        {
+          href: `/edit/menu/${data.menuId}/category`,
+          label: "Categories",
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category/${data.id}`,
+          label: data?.title,
         },
         {
           href: "#",
-          label: "Categories",
+          label: "Items",
         },
       ]);
     }
   }, [data]);
-  const CreateCategoryHandler = async (
-    data: z.infer<typeof CreateCategorySchema>
+  const CreateMenuItemHandler = async (
+    data: z.infer<typeof CreateItemSchema>
   ) => {
     SetIsCreating(true);
-    const [res, error] = await CategoryApi.Create(
+    const [res, error] = await MenuItemApi.Create(
       params.domain,
-      params.menuId,
+      params.categoryId,
       {
         title: data.title,
       }
@@ -148,7 +189,7 @@ const page = () => {
       toast({
         duration: 5000,
         variant: "destructive",
-        title: "✘ Failed To Create Category.",
+        title: "✘ Failed To Create Menu Item.",
         description: "Server Is Under Maintenance.",
       });
     }
@@ -156,7 +197,7 @@ const page = () => {
       toast({
         duration: 5000,
         variant: "destructive",
-        title: "✘ Failed To Create Category.",
+        title: "✘ Failed To Create Menu Item.",
         description: "Something Unexpected Happend Try Again Later.",
       });
     }
@@ -164,7 +205,7 @@ const page = () => {
       toast({
         duration: 5000,
         variant: "destructive",
-        title: "✘ Failed To Create Category.",
+        title: "✘ Failed To Create Menu Item.",
         description:
           error.response?.data?.message ||
           "Something Unexpected Happend Try Again Later.",
@@ -174,12 +215,14 @@ const page = () => {
     if (res && res.data) {
       toast({
         duration: 5000,
-        title: "✓ Category Created Successfully.",
-        description: "Your Category Was Create Successfully.",
+        title: "✓ Menu Item Created Successfully.",
+        description: "Your Menu Item Was Create Successfully.",
       });
       qc.invalidateQueries(QueryKey);
       if (res.data?.data?.id) {
-        router.push(`/edit/menu/${params.menuId}/category/${res.data.data.id}`);
+        router.push(
+          `/edit/menu/${params.menuId}/category/${res.data.data.categoryId}/item/${res.data.data.id}`
+        );
       }
     }
     SetIsCreating(false);
@@ -188,7 +231,7 @@ const page = () => {
   if (isLoading)
     return (
       <>
-        <SidebarContentTitle>Menu Categories</SidebarContentTitle>
+        <SidebarContentTitle>Menu Items</SidebarContentTitle>
         <SidebarContent className="mb-16">
           <div className="flex flex-col gap-4">
             <Skeleton className="h-[60px]" />
@@ -207,24 +250,24 @@ const page = () => {
         </footer>
       </>
     );
-  const categories = data?.category || [];
+  const MenuItems = data?.item || [];
 
   return (
     <>
-      <SidebarContentTitle>Menu Categories</SidebarContentTitle>
+      <SidebarContentTitle>Menu Items</SidebarContentTitle>
       <SidebarContent className="mb-16">
-        {categories.length == 0 && <NotFound type="category" />}
-        <Sortable value={categories || []} id="menu">
+        {MenuItems.length == 0 && <NotFound type="menu item" />}
+        <Sortable value={MenuItems || []} id="menu">
           <div className="flex flex-col gap-4">
-            {categories &&
-              categories.map((item, index) => (
+            {MenuItems &&
+              MenuItems.map((item, index) => (
                 <SortableItem key={item.id} value={item.id} className="group">
                   <SidebarItem
                     className="flex-row justify-between items-center overflow-hidden relative select-none cursor-pointer active:opacity-60"
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(
-                        `/edit/menu/${params.menuId}/category/${item.id}`
+                        `/edit/menu/${item.menuId}/category/${item.categoryId}/item/${item.id}`
                       );
                     }}
                   >
@@ -258,19 +301,19 @@ const page = () => {
                 className="w-full"
                 onClick={() => setIsDialogOpen(true)}
               >
-                <Plus /> Add Category
+                <Plus /> Add Item
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
               <form
                 className="flex flex-col gap-4"
-                onSubmit={form.handleSubmit(CreateCategoryHandler)}
+                onSubmit={form.handleSubmit(CreateMenuItemHandler)}
               >
                 <DialogHeader>
-                  <DialogTitle>Create Category</DialogTitle>
+                  <DialogTitle>Create Item</DialogTitle>
                   <DialogDescription>
-                    Breaks down the menu into specific sections, like Beverages,
-                    Desserts, or Salads
+                    Individual dishes with details like name, description, and
+                    price.
                   </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-5">
@@ -282,7 +325,10 @@ const page = () => {
                         <div className="flex flex-row gap-4 items-center">
                           <FormLabel>Title</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Hot Drinks" {...field} />
+                            <Input
+                              placeholder="e.g.  Garlic Bread"
+                              {...field}
+                            />
                           </FormControl>
                         </div>
                         <FormMessage />

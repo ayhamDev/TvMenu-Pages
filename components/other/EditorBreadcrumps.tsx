@@ -10,9 +10,11 @@ import {
 } from "../ui/breadcrumb";
 import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { Skeleton } from "../ui/skeleton";
 
 interface BreadcrumbLink {
   label: string;
+  isLoading?: boolean;
   href: string;
 }
 
@@ -50,11 +52,15 @@ export default function EditorBreadcrumb({
               <BreadcrumbItem>
                 {index == truncatedLinks.length - 1 ? (
                   <BreadcrumbPage className="text-sm font-semibold">
-                    {link.label}
+                    {link.isLoading ? (
+                      <Skeleton className="h-[20px] w-[75px]" />
+                    ) : (
+                      link.label
+                    )}
                   </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink asChild>
-                    {link.href !== "#" ? (
+                    {link.href !== "#" && !link.isLoading ? (
                       <Link
                         href={link.href}
                         className="hover:underline"
@@ -63,7 +69,13 @@ export default function EditorBreadcrumb({
                         {link.label}
                       </Link>
                     ) : (
-                      <span>{link.label}</span>
+                      <span>
+                        {link.isLoading ? (
+                          <Skeleton className="h-[20px] w-[75px]" />
+                        ) : (
+                          link.label
+                        )}
+                      </span>
                     )}
                   </BreadcrumbLink>
                 )}

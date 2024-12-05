@@ -19,7 +19,10 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import { ICategory } from "@/interface/Category,interface";
 import { IMenu } from "@/interface/Menu.interface";
+import { CategoryApi } from "@/utils/api/category";
+import { MenuItemApi } from "@/utils/api/item";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +33,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
 
-export const EditMenuSchema = z.object({
+export const EditCategorySchema = z.object({
   title: z
     .string()
     .max(60, {
@@ -52,14 +55,32 @@ export const EditMenuSchema = z.object({
 const page = () => {
   const router = useRouter();
 
-  const params = useParams<{ domain: string; menuId: string }>();
+  const params = useParams<{
+    domain: string;
+    menuId: string;
+    categoryId: string;
+    itemId: string;
+  }>();
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
 
-  const QueryKey = ["page", params.domain, "menu", params.menuId];
-  const { data, error, isLoading } = useQuery<IMenu>({
+  const QueryKey = [
+    "page",
+    params.domain,
+    "menu",
+    params.menuId,
+    "category",
+    params.categoryId,
+    "item",
+    params.itemId,
+  ];
+  const { data, error, isLoading } = useQuery<ICategory>({
     queryKey: QueryKey,
-    queryFn: () => MenuApi.FindOne(params.domain, params.menuId),
+    queryFn: () =>
+      MenuItemApi.FindOne(params.domain, params.categoryId, [
+        "menu",
+        "category",
+      ]),
     retry: 1,
   });
   const qc = useQueryClient();
@@ -69,13 +90,31 @@ const page = () => {
       label: "Menu",
     },
     {
-      href: "#",
+      href: `/edit/menu/${params.menuId}`,
+      label: "",
+      isLoading: true,
+    },
+    {
+      href: `/edit/menu/${params.menuId}/category`,
+      label: "Categories",
+    },
+    {
+      href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+      label: "",
+      isLoading: true,
+    },
+    {
+      href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item`,
+      label: "item",
+    },
+    {
+      href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item`,
       label: "",
       isLoading: true,
     },
   ]);
   const form = useForm({
-    resolver: zodResolver(EditMenuSchema),
+    resolver: zodResolver(EditCategorySchema),
     defaultValues: {
       title: "",
       caption: "",
@@ -84,20 +123,33 @@ const page = () => {
     },
   });
   const visible = form.watch("visible");
+
   useLayoutEffect(() => {
-    const menus =
-      qc.getQueryData<IMenu[]>(["page", params.domain, "menu"]) || [];
-    if (menus.length != 0) {
-      const menu = menus.find((menu) => menu.id == params.menuId);
-      if (!menu) return;
+    const menu = qc.getQueryData<IMenu>([
+      "page",
+      params.domain,
+      "menu",
+      params.menuId,
+    ]);
+    if (menu) {
       updateBreadcrumbs([
         {
           href: "/edit/menu",
           label: "Menu",
         },
         {
-          href: "#",
+          href: `/edit/menu/${params.menuId}`,
           label: menu.title,
+          isLoading: true,
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category`,
+          label: "Categories",
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+          label: "",
+          isLoading: true,
         },
       ]);
     }
@@ -110,7 +162,15 @@ const page = () => {
           label: "Menu",
         },
         {
-          href: "#",
+          href: `/edit/menu/${params.menuId}`,
+          label: data.menu.title,
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category`,
+          label: "Categories",
+        },
+        {
+          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
           label: data.title,
         },
       ]);
@@ -119,6 +179,7 @@ const page = () => {
   const detectChanges = () => {
     if (!data) return false;
     const currentValues = form.getValues();
+
     return (
       currentValues.title !== data.title ||
       currentValues.caption !== data.caption ||
@@ -158,7 +219,9 @@ const page = () => {
     SetIsSaving(false);
     SetShowChangeActions(false);
   };
-  const SaveChangesHandler = async (menu: z.infer<typeof EditMenuSchema>) => {
+  const SaveChangesHandler = async (
+    menu: z.infer<typeof EditCategorySchema>
+  ) => {
     SetIsSaving(true);
     if (!data) return null;
     const UpdatedMenu: DeepPartial<IMenu> = {};
@@ -175,9 +238,14 @@ const page = () => {
       UpdatedMenu.visible = menu.visible;
     }
 
-    const [res, error] = await MenuApi.Update(params.domain, params.menuId, {
-      ...UpdatedMenu,
-    });
+    const [res, error] = await CategoryApi.Update(
+      params.domain,
+      params.menuId,
+      params.categoryId,
+      {
+        ...UpdatedMenu,
+      }
+    );
     if (error && !error?.response) {
       toast({
         duration: 5000,
@@ -221,19 +289,20 @@ const page = () => {
       error.response &&
       error.response?.status >= 400
     ) {
-      router.replace("/edit/menu");
+      router.replace(
+        `/edit/menu/${params.menuId}/category/${params.categoryId}/item`
+      );
     }
   }, [error]);
 
   if (isLoading)
     return (
       <>
-        <SidebarContentTitle>Edit Menu</SidebarContentTitle>
+        <SidebarContentTitle>Edit Category</SidebarContentTitle>
         <SidebarContent className="mb-16 p-0">
           <div className="p-4 flex flex-col gap-4">
             <Skeleton className="h-[300px]" />
             <Skeleton className="h-[75px]" />
-            <Skeleton className="h-[60px]" />
             <Skeleton className="h-[60px]" />
           </div>
         </SidebarContent>
@@ -242,7 +311,7 @@ const page = () => {
 
   return (
     <>
-      <SidebarContentTitle>Edit Menu</SidebarContentTitle>
+      <SidebarContentTitle>Edit Category</SidebarContentTitle>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
           <SidebarContent className="mb-16 p-0">
@@ -341,10 +410,12 @@ const page = () => {
               <SidebarItem
                 className="flex-row justify-between items-center cursor-pointer active:opacity-60 group overflow-hidden"
                 onClick={() =>
-                  router.push(`/edit/menu/${params.menuId}/category`)
+                  router.push(
+                    `/edit/menu/${params.menuId}/category/${params.categoryId}/item`
+                  )
                 }
               >
-                <h4>Catagories</h4>
+                <h4>Menu Items</h4>
                 <div className="flex items-center justify-center gap-2">
                   <ChevronRight className="mr-[-35px] opacity-0 group-hover:mr-0 group-hover:opacity-100 duration-200" />
                 </div>

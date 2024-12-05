@@ -40,7 +40,10 @@ const EditorSidebar = () => {
             <SidebarMenu className="gap-4">
               {Tabs.map((tabItem) => (
                 <SidebarMenuItem key={tabItem.name}>
-                  <Link href={`/edit/${tabItem.name.toLowerCase()}`}>
+                  <Link
+                    href={`/edit/${tabItem.name.toLowerCase()}`}
+                    shallow={true}
+                  >
                     <SidebarMenuButton
                       isActive={path.includes(tabItem.path)}
                       className="transition-all duration-150"
