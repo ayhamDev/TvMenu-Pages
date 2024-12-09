@@ -50,7 +50,7 @@ const EditorAppBar = ({ user }: { user: IUser }) => {
     }
   }, [admin, client, InitalLoginState]);
   return (
-    <div className="sm:min-h-[60px] sm:h-max min-h-max shadow-inner flex flex-col-reverse sm:flex-row justify-between sm:gap-6 gap-2 sm:items-center items-start px-6 sm:pt-0 pt-6">
+    <div className="sm:min-h-[64px] sm:h-max min-h-max shadow-inner flex flex-col-reverse sm:flex-row justify-between sm:gap-6 gap-2 sm:items-center items-start px-6 sm:pt-0 pt-6">
       <div className="min-w-[200px]">
         <EditorBreadcrumb
           links={[...breadcrumbs]}

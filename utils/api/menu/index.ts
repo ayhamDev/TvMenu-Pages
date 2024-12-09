@@ -1,4 +1,5 @@
 import { Create } from "./Create";
+import { Delete } from "./Delete";
 import { FindOne } from "./FindOne";
 import { GetAll } from "./GetAll";
 import { GetCategories } from "./GetCategories";
@@ -10,6 +11,7 @@ export const MenuApi = {
   FindOne,
   Create,
   Update,
+  Delete,
   GetCategories,
   GetItems,
 };

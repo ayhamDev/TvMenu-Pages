@@ -1,9 +1,13 @@
 "use client";
+import DeleteHandler from "@/components/other/DeleteHandler";
+import MediaBrowser from "@/components/other/MediaBrowser";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
 import SidebarContent from "@/components/sidebar/SidebarContent";
 import SidebarItem from "@/components/sidebar/SidebarItem";
+import SidebarItemNavigator from "@/components/sidebar/SidebarItemNavigator";
+import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -24,7 +28,7 @@ import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { ChevronRight, Eye, EyeOff } from "lucide-react";
+import { Delete, Eye, EyeOff, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
@@ -41,11 +45,17 @@ export const EditMenuSchema = z.object({
     }),
   caption: z
     .string()
-    .max(60, {
+    .max(500, {
       message: "Caption must contain at most 500 character(s)",
     })
     .optional(),
-  // imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .max(600, {
+      message: "ImageUrl must contain at most 600 character(s)",
+    })
+    .optional(),
+  imageId: z.string().optional(),
   visible: z.boolean(),
 });
 
@@ -74,12 +84,13 @@ const page = () => {
       isLoading: true,
     },
   ]);
-  const form = useForm({
+  const form = useForm<z.infer<typeof EditMenuSchema>>({
     resolver: zodResolver(EditMenuSchema),
     defaultValues: {
       title: "",
       caption: "",
-      // imageUrl: "",
+      imageUrl: "",
+      imageId: "",
       visible: true,
     },
   });
@@ -231,7 +242,7 @@ const page = () => {
         <SidebarContentTitle>Edit Menu</SidebarContentTitle>
         <SidebarContent className="mb-16 p-0">
           <div className="p-4 flex flex-col gap-4">
-            <Skeleton className="h-[300px]" />
+            <Skeleton className="h-[315px]" />
             <Skeleton className="h-[75px]" />
             <Skeleton className="h-[60px]" />
             <Skeleton className="h-[60px]" />
@@ -243,10 +254,11 @@ const page = () => {
   return (
     <>
       <SidebarContentTitle>Edit Menu</SidebarContentTitle>
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
-          <SidebarContent className="mb-16 p-0">
-            <div className="p-4 flex flex-col gap-4">
+          <SidebarContent className="mb-16 p-0 ">
+            <div className="p-4 flex flex-col gap-4 relative">
               <SidebarItem>
                 <div className="flex flex-col gap-2">
                   <FormField
@@ -289,19 +301,44 @@ const page = () => {
                   <span className="text-muted-foreground">(Optional)</span>
                 </Label>
 
-                <div className="flex justify-center items-center gap-2">
-                  <Label
-                    htmlFor="favicon"
-                    className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden"
-                  >
+                <div className="flex justify-between items-center gap-4">
+                  <div className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden">
                     <img src="/icon-128x128.png" />
-                  </Label>
-                  <Input
-                    type="file"
-                    id="favicon"
-                    accept="image/png, image/jpeg, image/x-icon"
-                  />
+                  </div>
+                  {form.getValues("imageId") ? (
+                    <div className="flex justify-between items-center max-w-[240px] w-full bg-background px-4 py-2 rounded-md ">
+                      <span className="max-w-[70%] overflow-hidden truncate">
+                        Burgers.fwefewfewfwefewfwefwefw
+                      </span>
+                      <Button
+                        type="button"
+                        size={"icon"}
+                        className="w-[24px] h-[24px] rounded-full"
+                        variant={"secondary"}
+                      >
+                        <X />
+                      </Button>
+                    </div>
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            <Input
+                              className="w-full"
+                              placeholder="Image Url..."
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
+                <MediaBrowser type="image" form={form} />
               </SidebarItem>
               <SidebarItem>
                 <div className="flex items-center justify-between ">
@@ -337,20 +374,19 @@ const page = () => {
                   />
                 </div>
               </SidebarItem>
-
-              <SidebarItem
-                className="flex-row justify-between items-center cursor-pointer active:opacity-60 group overflow-hidden"
-                onClick={() =>
-                  router.push(`/edit/menu/${params.menuId}/category`)
-                }
-              >
-                <h4>Catagories</h4>
-                <div className="flex items-center justify-center gap-2">
-                  <ChevronRight className="mr-[-35px] opacity-0 group-hover:mr-0 group-hover:opacity-100 duration-200" />
-                </div>
-              </SidebarItem>
+              <SidebarItemNavigator
+                title="Categories"
+                href={`/edit/menu/${params.menuId}/category`}
+              />
+              <DeleteHandler
+                target="Menu"
+                targetTitle={data?.title || ""}
+                id={data?.id || ""}
+                queryKey={QueryKey}
+              />
             </div>
           </SidebarContent>
+
           <ChangesHandler
             ShowChangeActions={ShowChangeActions}
             IsSaving={IsSaving}

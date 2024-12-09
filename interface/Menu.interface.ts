@@ -4,6 +4,7 @@ import { IPage } from "./Page.interface";
 
 export interface IMenu {
   id: string;
+
   pageId: string;
 
   title: string;

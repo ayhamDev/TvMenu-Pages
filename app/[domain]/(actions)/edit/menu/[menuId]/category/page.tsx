@@ -67,6 +67,7 @@ const page = () => {
     queryFn: () => MenuApi.GetCategories(params.domain, params.menuId),
     retry: 1,
   });
+
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -116,7 +117,6 @@ const page = () => {
 
   useEffect(() => {
     if (data) {
-      console.log(data);
       updateBreadcrumbs([
         {
           href: "/edit/menu",

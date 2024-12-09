@@ -37,7 +37,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Menu, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { CreateCategorySchema } from "./[menuId]/category/page";
@@ -67,6 +67,7 @@ const page = () => {
     queryFn: () => MenuApi.GetAll(params.domain),
     retry: 1,
   });
+
   useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -128,6 +129,9 @@ const page = () => {
     SetIsCreating(false);
     setIsDialogOpen(false);
   };
+  useEffect(() => {
+    console.log(error);
+  }, [error]);
   if (isLoading)
     return (
       <>

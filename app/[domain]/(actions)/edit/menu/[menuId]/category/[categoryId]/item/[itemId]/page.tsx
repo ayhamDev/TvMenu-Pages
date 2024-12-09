@@ -1,4 +1,5 @@
 "use client";
+import DeleteHandler from "@/components/other/DeleteHandler";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
@@ -21,13 +22,13 @@ import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
 import { ICategory } from "@/interface/Category,interface";
 import { IMenu } from "@/interface/Menu.interface";
+import { IMenuItem } from "@/interface/MenuItem.interface";
 import { CategoryApi } from "@/utils/api/category";
 import { MenuItemApi } from "@/utils/api/item";
-import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { ChevronRight, Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
@@ -44,8 +45,14 @@ export const EditCategorySchema = z.object({
     }),
   caption: z
     .string()
-    .max(60, {
+    .max(500, {
       message: "Caption must contain at most 500 character(s)",
+    })
+    .optional(),
+  price: z
+    .string()
+    .max(200, {
+      message: "Price must contain at most 200 character(s)",
     })
     .optional(),
   // imageUrl: z.string().optional(),
@@ -74,13 +81,10 @@ const page = () => {
     "item",
     params.itemId,
   ];
-  const { data, error, isLoading } = useQuery<ICategory>({
+  const { data, error, isLoading } = useQuery<IMenuItem>({
     queryKey: QueryKey,
     queryFn: () =>
-      MenuItemApi.FindOne(params.domain, params.categoryId, [
-        "menu",
-        "category",
-      ]),
+      MenuItemApi.FindOne(params.domain, params.itemId, ["menu", "category"]),
     retry: 1,
   });
   const qc = useQueryClient();
@@ -118,6 +122,7 @@ const page = () => {
     defaultValues: {
       title: "",
       caption: "",
+      price: "",
       // imageUrl: "",
       visible: true,
     },
@@ -125,29 +130,39 @@ const page = () => {
   const visible = form.watch("visible");
 
   useLayoutEffect(() => {
-    const menu = qc.getQueryData<IMenu>([
+    const category = qc.getQueryData<ICategory>([
       "page",
       params.domain,
       "menu",
       params.menuId,
+      "category",
+      params.categoryId,
     ]);
-    if (menu) {
+    if (category && category.menu) {
       updateBreadcrumbs([
         {
           href: "/edit/menu",
           label: "Menu",
         },
         {
-          href: `/edit/menu/${params.menuId}`,
-          label: menu.title,
+          href: `/edit/menu/${category.menuId}`,
+          label: category.menu.title,
           isLoading: true,
         },
         {
-          href: `/edit/menu/${params.menuId}/category`,
+          href: `/edit/menu/${category.menuId}/category`,
           label: "Categories",
         },
         {
-          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+          href: `/edit/menu/${category.menuId}/category/${category.id}`,
+          label: category.title,
+        },
+        {
+          href: `/edit/menu/${category.menuId}/category/${category.id}/item`,
+          label: "items",
+        },
+        {
+          href: `/edit/menu/${category.menuId}/category/${category.id}/item/${params.itemId}`,
           label: "",
           isLoading: true,
         },
@@ -155,22 +170,31 @@ const page = () => {
     }
   }, []);
   useEffect(() => {
-    if (data) {
+    if (data && data.menu && data.category) {
       updateBreadcrumbs([
         {
           href: "/edit/menu",
           label: "Menu",
         },
         {
-          href: `/edit/menu/${params.menuId}`,
+          href: `/edit/menu/${data.menuId}`,
           label: data.menu.title,
+          isLoading: true,
         },
         {
-          href: `/edit/menu/${params.menuId}/category`,
+          href: `/edit/menu/${data.menuId}/category`,
           label: "Categories",
         },
         {
-          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+          href: `/edit/menu/${data.menuId}/category/${data.categoryId}`,
+          label: data.category.title,
+        },
+        {
+          href: `/edit/menu/${data.menuId}/category/${data.categoryId}/item`,
+          label: "items",
+        },
+        {
+          href: `/edit/menu/${data.menuId}/category/${data.categoryId}/item/${data.id}`,
           label: data.title,
         },
       ]);
@@ -199,6 +223,10 @@ const page = () => {
         data.caption = "";
       }
       form.setValue("caption", data.caption);
+      if (!data.price) {
+        data.price = "";
+      }
+      form.setValue("price", data.price);
       // form.setValue("imageUrl", data.imageUrl);
       form.setValue("visible", data.visible);
     }
@@ -210,6 +238,7 @@ const page = () => {
       form.reset({
         title: data.title,
         caption: data.caption || "",
+        price: data.price || "",
         // imageUrl: data.imageUrl,
         visible: data.visible,
       });
@@ -224,12 +253,15 @@ const page = () => {
   ) => {
     SetIsSaving(true);
     if (!data) return null;
-    const UpdatedMenu: DeepPartial<IMenu> = {};
+    const UpdatedMenu: DeepPartial<IMenuItem> = {};
     if (menu.title != data.title) {
       UpdatedMenu.title = menu.title;
     }
     if (menu.caption != data.caption) {
       UpdatedMenu.caption = menu.caption;
+    }
+    if (menu.price != data.price) {
+      UpdatedMenu.price = menu.price;
     }
     // if (menu.imageUrl != data.imageUrl) {
     //   UpdatedMenu.imageUrl = menu.imageUrl;
@@ -238,10 +270,9 @@ const page = () => {
       UpdatedMenu.visible = menu.visible;
     }
 
-    const [res, error] = await CategoryApi.Update(
+    const [res, error] = await MenuItemApi.Update(
       params.domain,
-      params.menuId,
-      params.categoryId,
+      params.itemId,
       {
         ...UpdatedMenu,
       }
@@ -298,12 +329,11 @@ const page = () => {
   if (isLoading)
     return (
       <>
-        <SidebarContentTitle>Edit Category</SidebarContentTitle>
+        <SidebarContentTitle>Edit Menu Item</SidebarContentTitle>
         <SidebarContent className="mb-16 p-0">
           <div className="p-4 flex flex-col gap-4">
-            <Skeleton className="h-[300px]" />
+            <Skeleton className="h-[400px]" />
             <Skeleton className="h-[75px]" />
-            <Skeleton className="h-[60px]" />
           </div>
         </SidebarContent>
       </>
@@ -311,7 +341,7 @@ const page = () => {
 
   return (
     <>
-      <SidebarContentTitle>Edit Category</SidebarContentTitle>
+      <SidebarContentTitle>Edit Menu Item</SidebarContentTitle>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
           <SidebarContent className="mb-16 p-0">
@@ -323,7 +353,7 @@ const page = () => {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Menu Title</FormLabel>
+                        <FormLabel>Item Title</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. breakfast" {...field} />
                         </FormControl>
@@ -339,13 +369,33 @@ const page = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Menu Caption{" "}
+                          Item Caption{" "}
                           <span className="text-muted-foreground">
                             (Optional)
                           </span>
                         </FormLabel>
                         <FormControl>
                           <Textarea placeholder="e.g. breakfast" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Item Price{" "}
+                          <span className="text-muted-foreground">
+                            (Optional)
+                          </span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input placeholder="e.g. $2.99" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -406,20 +456,12 @@ const page = () => {
                   />
                 </div>
               </SidebarItem>
-
-              <SidebarItem
-                className="flex-row justify-between items-center cursor-pointer active:opacity-60 group overflow-hidden"
-                onClick={() =>
-                  router.push(
-                    `/edit/menu/${params.menuId}/category/${params.categoryId}/item`
-                  )
-                }
-              >
-                <h4>Menu Items</h4>
-                <div className="flex items-center justify-center gap-2">
-                  <ChevronRight className="mr-[-35px] opacity-0 group-hover:mr-0 group-hover:opacity-100 duration-200" />
-                </div>
-              </SidebarItem>
+              <DeleteHandler
+                id={params.itemId}
+                target="Menu Item"
+                targetTitle={data?.title || ""}
+                queryKey={QueryKey}
+              />
             </div>
           </SidebarContent>
           <ChangesHandler

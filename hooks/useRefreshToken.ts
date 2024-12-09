@@ -1,14 +1,13 @@
-import axios, { AxiosError, AxiosInstance } from "axios";
-import jwt from "jsonwebtoken";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import useAuth from "./useAuth";
 import { IUser } from "@/interface/User.interface";
-import { CleanPromise } from "@/utils/CleanPromise";
 import api from "@/utils/Api";
-import { RemoveSession } from "@/utils/RemoveSession";
+import { CleanPromise } from "@/utils/CleanPromise";
 import { RefreshToken } from "@/utils/RefreshToken";
+import { AxiosError } from "axios";
+import jwt from "jsonwebtoken";
+import { useEffect, useLayoutEffect, useState } from "react";
+import useAuth from "./useAuth";
 
-const useRefreshToken = (user: IUser) => {
+const useRefreshToken = (user: IUser | null) => {
   const {
     admin,
     client,
@@ -26,6 +25,7 @@ const useRefreshToken = (user: IUser) => {
   useLayoutEffect(() => {
     const requestInterceptor = api.interceptors.request.use(
       (config) => {
+        if (!user) return config;
         if (user.Role === "Admin" && admin.accessToken) {
           config.headers.Authorization = `Bearer ${admin.accessToken}`;
         } else if (user.Role === "Client" && client.accessToken) {
@@ -88,6 +88,7 @@ const useRefreshToken = (user: IUser) => {
 
   useEffect(() => {
     const fetchNewTokenIfUnauthenticated = async () => {
+      if (!user) return null;
       if (user.Role == "Client" && !client.accessToken) {
         const [ClientRes, ClientError] = await CleanPromise(
           RefreshToken("Client")
@@ -106,6 +107,7 @@ const useRefreshToken = (user: IUser) => {
   useEffect(() => {
     // Check if admin or client user is not authenticated
     const fetchNewTokenIfUnauthenticated = async () => {
+      if (!user) return null;
       if (user.Role == "Admin" && !admin.accessToken) {
         const [AdminRes, AdminError] = await CleanPromise(
           RefreshToken("Admin")

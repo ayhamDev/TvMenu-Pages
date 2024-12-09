@@ -1,9 +1,11 @@
 "use client";
+import DeleteHandler from "@/components/other/DeleteHandler";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
 import SidebarContent from "@/components/sidebar/SidebarContent";
 import SidebarItem from "@/components/sidebar/SidebarItem";
+import SidebarItemNavigator from "@/components/sidebar/SidebarItemNavigator";
 import {
   Form,
   FormControl,
@@ -43,7 +45,7 @@ export const EditCategorySchema = z.object({
     }),
   caption: z
     .string()
-    .max(60, {
+    .max(500, {
       message: "Caption must contain at most 500 character(s)",
     })
     .optional(),
@@ -76,6 +78,7 @@ const page = () => {
       CategoryApi.FindOne(params.domain, params.categoryId, ["menu"]),
     retry: 1,
   });
+
   const qc = useQueryClient();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
@@ -224,7 +227,6 @@ const page = () => {
 
     const [res, error] = await CategoryApi.Update(
       params.domain,
-      params.menuId,
       params.categoryId,
       {
         ...UpdatedMenu,
@@ -286,6 +288,7 @@ const page = () => {
             <Skeleton className="h-[300px]" />
             <Skeleton className="h-[75px]" />
             <Skeleton className="h-[60px]" />
+            <Skeleton className="h-[60px]" />
           </div>
         </SidebarContent>
       </>
@@ -305,7 +308,7 @@ const page = () => {
                     name="title"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Menu Title</FormLabel>
+                        <FormLabel>Category Title</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g. breakfast" {...field} />
                         </FormControl>
@@ -321,7 +324,7 @@ const page = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>
-                          Menu Caption{" "}
+                          Category Caption{" "}
                           <span className="text-muted-foreground">
                             (Optional)
                           </span>
@@ -388,20 +391,16 @@ const page = () => {
                   />
                 </div>
               </SidebarItem>
-
-              <SidebarItem
-                className="flex-row justify-between items-center cursor-pointer active:opacity-60 group overflow-hidden"
-                onClick={() =>
-                  router.push(
-                    `/edit/menu/${params.menuId}/category/${params.categoryId}/item`
-                  )
-                }
-              >
-                <h4>Menu Items</h4>
-                <div className="flex items-center justify-center gap-2">
-                  <ChevronRight className="mr-[-35px] opacity-0 group-hover:mr-0 group-hover:opacity-100 duration-200" />
-                </div>
-              </SidebarItem>
+              <SidebarItemNavigator
+                title="Menu Items"
+                href={`/edit/menu/${params.menuId}/category/${params.categoryId}/item`}
+              />
+              <DeleteHandler
+                target="Category"
+                targetTitle={data?.title || ""}
+                id={data?.id || ""}
+                queryKey={QueryKey}
+              />
             </div>
           </SidebarContent>
           <ChangesHandler
