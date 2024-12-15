@@ -9,7 +9,9 @@ const NotFound = ({
   return (
     <SidebarItem>
       <p className="text-muted-foreground">
-        Nothing here yet! Create your first {type} to get started.
+        {type == "media"
+          ? `Nothing here yet! Upload your first ${type} to get started.`
+          : `Nothing here yet! Create your first ${type} to get started.`}
       </p>
     </SidebarItem>
   );

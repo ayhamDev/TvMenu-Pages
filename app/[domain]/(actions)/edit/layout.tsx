@@ -3,14 +3,14 @@ import EditorAppBar from "@/components/other/EditorAppBar";
 import EditorPreview from "@/components/other/EditorPreview";
 import EditorSidebar from "@/components/other/EditorSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
-import { HasSession } from "@/utils/HasSession";
+import { GetSession } from "@/utils/GetSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";
 import { AnimatePresence } from "framer-motion";
+import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import { IClientPageProps } from "../../page";
-import { Metadata } from "next";
 
 export async function generateMetadata({
   params,
@@ -32,8 +32,8 @@ const layout = async ({
   const props = await params;
   // Session Means The User Has a Refresh Token HttpOnly Cookie.
   const cookieStore = await cookies();
-  const user = await HasSession(cookieStore);
-
+  // Get The User If He Has Session
+  const user = await GetSession(cookieStore);
   // if There Was No Cookie Or Session Redirect to client page to authentiacte
   if (!user) return redirect(`${process.env.NEXT_PUBLIC_DASHBOARD_URL}/client`);
 

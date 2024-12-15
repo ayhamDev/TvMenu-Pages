@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import { ReadonlyRequestCookies } from "next/dist/server/web/spec-extension/adapters/request-cookies";
 
 // Prioritize Admin over Client
-export async function HasSession(
+export async function GetSession(
   CookieStore: ReadonlyRequestCookies
 ): Promise<IUser | null> {
   // Check for Admin session first

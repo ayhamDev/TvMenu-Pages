@@ -1,13 +1,15 @@
 "use client";
 import DeleteHandler from "@/components/other/DeleteHandler";
+import DisplayState from "@/components/other/DisplayState";
 import MediaBrowser from "@/components/other/MediaBrowser";
+import RenderImage from "@/components/other/RenderImage";
+import RenderImageData from "@/components/other/RenderImageData";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
 import SidebarContent from "@/components/sidebar/SidebarContent";
 import SidebarItem from "@/components/sidebar/SidebarItem";
 import SidebarItemNavigator from "@/components/sidebar/SidebarItemNavigator";
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
@@ -23,12 +25,14 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
+import { cn } from "@/lib/utils";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Delete, Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
@@ -51,11 +55,16 @@ export const EditMenuSchema = z.object({
     .optional(),
   imageUrl: z
     .string()
-    .max(600, {
-      message: "ImageUrl must contain at most 600 character(s)",
+    .max(500, {
+      message: "ImageUrl must contain at most 500 character(s)",
     })
     .optional(),
-  imageId: z.string().optional(),
+  imageId: z
+    .string()
+    .max(200, {
+      message: "ImageUrl must contain at most 200 character(s)",
+    })
+    .optional(),
   visible: z.boolean(),
 });
 
@@ -66,13 +75,17 @@ const page = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
 
+  const enabledQuery = useEnableQuery();
+  const qc = useQueryClient();
   const QueryKey = ["page", params.domain, "menu", params.menuId];
+
   const { data, error, isLoading } = useQuery<IMenu>({
     queryKey: QueryKey,
     queryFn: () => MenuApi.FindOne(params.domain, params.menuId),
     retry: 1,
+    enabled: enabledQuery,
   });
-  const qc = useQueryClient();
+
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -133,6 +146,8 @@ const page = () => {
     return (
       currentValues.title !== data.title ||
       currentValues.caption !== data.caption ||
+      currentValues.imageUrl !== data.imageUrl ||
+      currentValues.imageId !== data.imageId ||
       currentValues.visible !== data.visible
     );
   };
@@ -149,7 +164,16 @@ const page = () => {
         data.caption = "";
       }
       form.setValue("caption", data.caption);
-      // form.setValue("imageUrl", data.imageUrl);
+      if (!data.imageUrl) {
+        data.imageUrl = "";
+      }
+      form.setValue("imageUrl", data.imageUrl);
+      form.setValue("caption", data.caption);
+      if (!data.imageId) {
+        data.imageId = "";
+      }
+      form.setValue("imageId", data.imageId);
+
       form.setValue("visible", data.visible);
     }
   }, [data]);
@@ -160,7 +184,8 @@ const page = () => {
       form.reset({
         title: data.title,
         caption: data.caption || "",
-        // imageUrl: data.imageUrl,
+        imageUrl: data.imageUrl || "",
+        imageId: data.imageId || "",
         visible: data.visible,
       });
     } else {
@@ -179,9 +204,12 @@ const page = () => {
     if (menu.caption != data.caption) {
       UpdatedMenu.caption = menu.caption;
     }
-    // if (menu.imageUrl != data.imageUrl) {
-    //   UpdatedMenu.imageUrl = menu.imageUrl;
-    // }
+    if (menu.imageUrl != data.imageUrl) {
+      UpdatedMenu.imageUrl = menu.imageUrl == undefined ? null : menu.imageUrl;
+    }
+    if (menu.imageId != data.imageId) {
+      UpdatedMenu.imageId = menu.imageId == undefined ? null : menu.imageId;
+    }
     if (menu.visible != data.visible) {
       UpdatedMenu.visible = menu.visible;
     }
@@ -221,6 +249,8 @@ const page = () => {
         title: "✓ Changes Saved Successfully.",
         description: "Your Changes Were Saved Successfully.",
       });
+      const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
+      qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
       SetShowChangeActions(false);
     }
@@ -236,28 +266,16 @@ const page = () => {
     }
   }, [error]);
 
-  if (isLoading)
-    return (
-      <>
-        <SidebarContentTitle>Edit Menu</SidebarContentTitle>
-        <SidebarContent className="mb-16 p-0">
-          <div className="p-4 flex flex-col gap-4">
-            <Skeleton className="h-[315px]" />
-            <Skeleton className="h-[75px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-          </div>
-        </SidebarContent>
-      </>
-    );
-
   return (
     <>
       <SidebarContentTitle>Edit Menu</SidebarContentTitle>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
-          <SidebarContent className="mb-16 p-0 ">
+        <form
+          className="flex-1 flex flex-col overflow-hidden relative"
+          onSubmit={form.handleSubmit(SaveChangesHandler)}
+        >
+          <SidebarContent className={cn("p-0", "mb-[70px]")}>
             <div className="p-4 flex flex-col gap-4 relative">
               <SidebarItem>
                 <div className="flex flex-col gap-2">
@@ -268,7 +286,11 @@ const page = () => {
                       <FormItem>
                         <FormLabel>Menu Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[40px]" />
+                          ) : (
+                            <Input placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -288,7 +310,11 @@ const page = () => {
                           </span>
                         </FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[80px]" />
+                          ) : (
+                            <Textarea placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -301,24 +327,21 @@ const page = () => {
                   <span className="text-muted-foreground">(Optional)</span>
                 </Label>
 
-                <div className="flex justify-between items-center gap-4">
-                  <div className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden">
-                    <img src="/icon-128x128.png" />
-                  </div>
+                <div className="flex flex-col gap-4">
+                  {isLoading ? (
+                    <Skeleton className="w-full aspect-square" />
+                  ) : (
+                    <RenderImage
+                      imageId={form.getValues("imageId") || ""}
+                      imageUrl={form.getValues("imageUrl") || ""}
+                    />
+                  )}
+
                   {form.getValues("imageId") ? (
-                    <div className="flex justify-between items-center max-w-[240px] w-full bg-background px-4 py-2 rounded-md ">
-                      <span className="max-w-[70%] overflow-hidden truncate">
-                        Burgers.fwefewfewfwefewfwefwefw
-                      </span>
-                      <Button
-                        type="button"
-                        size={"icon"}
-                        className="w-[24px] h-[24px] rounded-full"
-                        variant={"secondary"}
-                      >
-                        <X />
-                      </Button>
-                    </div>
+                    <RenderImageData
+                      onRemove={() => form.setValue("imageId", undefined)}
+                      imageId={form.getValues("imageId")}
+                    />
                   ) : (
                     <FormField
                       control={form.control}
@@ -326,11 +349,15 @@ const page = () => {
                       render={({ field }) => (
                         <FormItem className="w-full">
                           <FormControl>
-                            <Input
-                              className="w-full"
-                              placeholder="Image Url..."
-                              {...field}
-                            />
+                            {isLoading ? (
+                              <Skeleton className="w-full h-[40px]" />
+                            ) : (
+                              <Input
+                                className="w-full"
+                                placeholder="Image Url..."
+                                {...field}
+                              />
+                            )}
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -338,35 +365,37 @@ const page = () => {
                     />
                   )}
                 </div>
-                <MediaBrowser type="image" form={form} />
+                {isLoading ? (
+                  <Skeleton className="w-full h-[40px]" />
+                ) : (
+                  <MediaBrowser
+                    type="image"
+                    onChange={(imageId) => form.setValue("imageId", imageId)}
+                  />
+                )}
               </SidebarItem>
               <SidebarItem>
                 <div className="flex items-center justify-between ">
-                  <div className="flex gap-3 items-center">
-                    {visible ? (
-                      <Eye className={"text-green-300"} />
-                    ) : (
-                      <EyeOff className={"text-red-500"} />
-                    )}
+                  <DisplayState
+                    isLoading={isLoading}
+                    visible={visible}
+                    target="menu"
+                  />
 
-                    <div>
-                      <h1>{visible ? "Visible" : "Hidden"}</h1>
-                      <p className="text-muted-foreground text-xs">
-                        Your menu will
-                        {visible ? " be visible." : " not be visible"}
-                      </p>
-                    </div>
-                  </div>
                   <FormField
                     control={form.control}
                     name="visible"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-[44px] h-[24px] rounded-full" />
+                          ) : (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -378,15 +407,20 @@ const page = () => {
                 title="Categories"
                 href={`/edit/menu/${params.menuId}/category`}
               />
-              <DeleteHandler
-                target="Menu"
-                targetTitle={data?.title || ""}
-                id={data?.id || ""}
-                queryKey={QueryKey}
-              />
             </div>
           </SidebarContent>
-
+          {isLoading ? (
+            <footer className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0 z-20">
+              <Skeleton className="w-full h-[40px]" />
+            </footer>
+          ) : (
+            <DeleteHandler
+              target="Menu"
+              targetTitle={data?.title || ""}
+              id={data?.id || ""}
+              queryKey={QueryKey}
+            />
+          )}
           <ChangesHandler
             ShowChangeActions={ShowChangeActions}
             IsSaving={IsSaving}

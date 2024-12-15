@@ -1,5 +1,5 @@
 import EditPageButton from "@/components/other/EditPageButton";
-import { HasSession } from "@/utils/HasSession";
+import { GetSession } from "@/utils/GetSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";
 import { Metadata } from "next";
 import { cookies } from "next/headers";
@@ -21,7 +21,7 @@ const page = async ({ params }: IClientPageProps) => {
   // Getting The User To Check If He Has Ownership Over The Webpage
   const props = await params;
   const cookieStore = await cookies();
-  const user = await HasSession(cookieStore);
+  const user = await GetSession(cookieStore);
   const IsOwenr = await IsPageOwner(user, props.domain);
 
   return (

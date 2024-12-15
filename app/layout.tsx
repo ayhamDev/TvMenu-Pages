@@ -43,15 +43,15 @@ export default function RootLayout({ children }: RootLayoutProps) {
             fontSans.variable
           )}
         >
-          <ReactQueryClientProvider>
-            <ReduxProvider>
+          <ReduxProvider>
+            <ReactQueryClientProvider>
               <ThemeProvider attribute="class" defaultTheme="dark">
                 <NuqsAdapter>{children}</NuqsAdapter>
                 <TailwindIndicator />
               </ThemeProvider>
               <Toaster />
-            </ReduxProvider>
-          </ReactQueryClientProvider>
+            </ReactQueryClientProvider>
+          </ReduxProvider>
         </body>
       </html>
     </>

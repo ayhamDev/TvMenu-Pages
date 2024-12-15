@@ -1,5 +1,5 @@
 import TemplateSelector from "@/components/other/TemplateSelector";
-import { HasSession } from "@/utils/HasSession";
+import { GetSession } from "@/utils/GetSession";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { IClientPageProps } from "../../page";
@@ -18,7 +18,7 @@ const page = async ({ params }: IClientPageProps) => {
 
   // Session Means The User Has a Refresh Token HttpOnly Cookie.
   const cookieStore = await cookies();
-  const user = await HasSession(cookieStore);
+  const user = await GetSession(cookieStore);
 
   // if There Was No Cookie Or Session Redirect to client page to authentiacte
   if (!user) return redirect(`${process.env.NEXT_PUBLIC_DASHBOARD_URL}/client`);

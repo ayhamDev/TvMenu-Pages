@@ -1,14 +1,12 @@
 "use client";
+import MenuItem from "@/components/other/MenuItem";
+import MenuItemLoading from "@/components/other/MenuItemLoading";
 import NotFound from "@/components/other/NotFound";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
-import {
-  Sortable,
-  SortableDragHandle,
-  SortableItem,
-} from "@/components/other/sortable";
+import { Sortable, SortableItem } from "@/components/other/sortable";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
+import ChangesHandler from "@/components/sidebar/ChangesHandler";
 import SidebarContent from "@/components/sidebar/SidebarContent";
-import SidebarItem from "@/components/sidebar/SidebarItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,16 +29,28 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useEnableQuery from "@/hooks/useEnableQuery";
+import { ICategory } from "@/interface/Category.interface";
 import { IMenu } from "@/interface/Menu.interface";
 import { CategoryApi } from "@/utils/api/category";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Menu, Plus } from "lucide-react";
+import { Loader2, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
+import { EditCategorySchema } from "./[categoryId]/page";
+import useMenu from "@/hooks/useMenu";
+
+const CategoryOrderSchema = z.object({
+  order: z.array(
+    EditCategorySchema.extend({
+      id: z.string(),
+    })
+  ),
+});
 
 export const CreateCategorySchema = z.object({
   title: z
@@ -56,17 +66,21 @@ export const CreateCategorySchema = z.object({
 const page = () => {
   const router = useRouter();
   const params = useParams<{ domain: string; menuId: string }>();
-
+  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
+  const [IsSaving, SetIsSaving] = useState<boolean>(false);
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const qc = useQueryClient();
 
+  const enabledQuery = useEnableQuery();
+  const qc = useQueryClient();
   const QueryKey = ["page", params.domain, "menu", params.menuId, "category"];
-  const { data, error, isLoading } = useQuery<IMenu>({
+  const { data, error, isLoading } = useQuery<ICategory[]>({
     queryKey: QueryKey,
-    queryFn: () => MenuApi.GetCategories(params.domain, params.menuId),
+    queryFn: () => CategoryApi.GetAll(params.domain),
     retry: 1,
+    enabled: enabledQuery,
   });
+  const Menu = useMenu(params.domain, params.menuId);
 
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
@@ -75,20 +89,52 @@ const page = () => {
     },
     {
       href: `/edit/menu/${params.menuId}`,
-      label: "",
-      isLoading: true,
+      label: Menu ? Menu.title : "",
+      isLoading: Menu ? false : true,
     },
     {
       href: "#",
       label: "Categories",
     },
   ]);
+  const OrderForm = useForm<z.infer<typeof CategoryOrderSchema>>({
+    resolver: zodResolver(CategoryOrderSchema),
+    defaultValues: {
+      order: [],
+    },
+  });
+  const { move } = useFieldArray({
+    control: OrderForm.control,
+    name: "order",
+  });
+  const OrderedList = OrderForm.watch("order");
+
   const form = useForm({
     resolver: zodResolver(CreateCategorySchema),
     defaultValues: {
       title: "",
     },
   });
+  useEffect(() => {
+    if (data && data.length != 0) {
+      // @ts-ignore
+      OrderForm.setValue("order", data);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    if (data && data.length != 0) {
+      const OrderChanged = OrderedList.find(
+        // @ts-ignore
+        (item, index) => item.id != data[index].id
+      );
+      if (OrderChanged) {
+        SetShowChangeActions(true);
+      } else {
+        SetShowChangeActions(false);
+      }
+    }
+  }, [OrderedList, data]);
 
   useLayoutEffect(() => {
     const menu = qc.getQueryData<IMenu | undefined>([
@@ -124,7 +170,8 @@ const page = () => {
         },
         {
           href: `/edit/menu/${params.menuId}`,
-          label: data.title,
+          label: Menu ? Menu.title : "",
+          isLoading: Menu ? false : true,
         },
         {
           href: "#",
@@ -132,7 +179,7 @@ const page = () => {
         },
       ]);
     }
-  }, [data]);
+  }, [data, Menu]);
   const CreateCategoryHandler = async (
     data: z.infer<typeof CreateCategorySchema>
   ) => {
@@ -185,21 +232,68 @@ const page = () => {
     SetIsCreating(false);
     setIsDialogOpen(false);
   };
+  const CancelChangesHandler = () => {
+    if (data && data != undefined && data.length != 0) {
+      // @ts-ignore
+      OrderForm.setValue("order", data);
+    }
+  };
+  const SaveChangesHandler = async (OrderedListDto: { id: string }[]) => {
+    if (OrderedListDto.length == 0) return null;
+    SetIsSaving(true);
+    const [res, error] = await CategoryApi.Reorder(
+      params.domain,
+      OrderedListDto
+    );
+    if (error && !error?.response) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Reorder Menus.`,
+        description: "Server Is Under Maintenance.",
+      });
+    }
+    if (error && error.response && error.response?.status > 401) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Reorder Menus.`,
+        description: "Something Unexpected Happend Try Again Later.",
+      });
+    }
+    if (error && error.response && error.response?.status == 400) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Reorder Menus.`,
+        description:
+          error.response?.data?.message ||
+          "Something Unexpected Happend Try Again Later.",
+      });
+    }
+    if (res && res.data) {
+      toast({
+        duration: 5000,
+        title: "✓ Chnages Saved Successfully.",
+        description: "Your Changes Were Saved Successfully.",
+      });
+      SetShowChangeActions(false);
+
+      qc.setQueryData(QueryKey, [...OrderedList]);
+    }
+    SetIsSaving(false);
+  };
   if (isLoading)
     return (
       <>
         <SidebarContentTitle>Menu Categories</SidebarContentTitle>
         <SidebarContent className="mb-16">
           <div className="flex flex-col gap-4">
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
+            {Array(10)
+              .fill(true)
+              .map((_, index) => (
+                <MenuItemLoading key={index} />
+              ))}
           </div>
         </SidebarContent>
         <footer className="w-full px-4 py-4 bg-background border-t-2 flex absolute bottom-0 left-0 gap-4">
@@ -207,41 +301,50 @@ const page = () => {
         </footer>
       </>
     );
-  const categories = data?.category || [];
 
   return (
     <>
-      <SidebarContentTitle>Menu Categories</SidebarContentTitle>
-      <SidebarContent className="mb-16">
-        {categories.length == 0 && <NotFound type="category" />}
-        <Sortable value={categories || []} id="menu">
-          <div className="flex flex-col gap-4">
-            {categories &&
-              categories.map((item, index) => (
-                <SortableItem key={item.id} value={item.id} className="group">
-                  <SidebarItem
-                    className="flex-row justify-between items-center overflow-hidden relative select-none cursor-pointer active:opacity-60"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      router.push(
-                        `/edit/menu/${params.menuId}/category/${item.id}`
-                      );
-                    }}
-                  >
-                    {/* Use Tailwind group-hover for showing the drag handle */}
-                    <SortableDragHandle className="flex items-center absolute left-[-30px] h-full opacity-0 transition-all duration-200 group-hover:left-0 group-hover:opacity-100">
-                      <Menu className="size-4 p-4 h-full box-content" />
-                    </SortableDragHandle>
-                    <div className="flex items-center group-hover:ml-6 transition-all duration-150">
-                      <p className="px-3">{item.title}</p>
-                    </div>
-                  </SidebarItem>
-                </SortableItem>
-              ))}
-          </div>
-        </Sortable>
-      </SidebarContent>
-
+      <Form {...OrderForm}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            SaveChangesHandler(OrderedList.map((item) => ({ id: item.id })));
+          }}
+        >
+          <SidebarContentTitle>Menu Categories</SidebarContentTitle>
+          <SidebarContent className="mb-16">
+            {OrderedList.length == 0 && <NotFound type="category" />}
+            <Sortable
+              value={OrderedList || []}
+              id="category"
+              onMove={({ activeIndex, overIndex }) => {
+                move(activeIndex, overIndex);
+              }}
+            >
+              <div className="flex flex-col gap-4">
+                {OrderedList &&
+                  OrderedList.map((item, index) => (
+                    <SortableItem
+                      key={item.id}
+                      value={item.id}
+                      className="group"
+                    >
+                      <MenuItem
+                        item={item as ICategory}
+                        href={`/edit/menu/${params.menuId}/category/${item.id}`}
+                      />
+                    </SortableItem>
+                  ))}
+              </div>
+            </Sortable>
+          </SidebarContent>
+          <ChangesHandler
+            ShowChangeActions={ShowChangeActions}
+            IsSaving={IsSaving}
+            onCancel={CancelChangesHandler}
+          />
+        </form>
+      </Form>
       <footer className="w-full px-4 py-4 bg-background border-t-2 flex absolute bottom-0 left-0 gap-4">
         <Form {...form}>
           <Dialog

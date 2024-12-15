@@ -1,5 +1,9 @@
 "use client";
 import DeleteHandler from "@/components/other/DeleteHandler";
+import DisplayState from "@/components/other/DisplayState";
+import MediaBrowser from "@/components/other/MediaBrowser";
+import RenderImage from "@/components/other/RenderImage";
+import RenderImageData from "@/components/other/RenderImageData";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
@@ -21,8 +25,11 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
-import { ICategory } from "@/interface/Category,interface";
+import useEnableQuery from "@/hooks/useEnableQuery";
+import useMenu from "@/hooks/useMenu";
+import { ICategory } from "@/interface/Category.interface";
 import { IMenu } from "@/interface/Menu.interface";
+import { cn } from "@/lib/utils";
 import { CategoryApi } from "@/utils/api/category";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -49,7 +56,18 @@ export const EditCategorySchema = z.object({
       message: "Caption must contain at most 500 character(s)",
     })
     .optional(),
-  // imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .max(500, {
+      message: "ImageUrl must contain at most 500 character(s)",
+    })
+    .optional(),
+  imageId: z
+    .string()
+    .max(200, {
+      message: "ImageUrl must contain at most 200 character(s)",
+    })
+    .optional(),
   visible: z.boolean(),
 });
 
@@ -72,11 +90,14 @@ const page = () => {
     "category",
     params.categoryId,
   ];
+  const enabledQuery = useEnableQuery();
+  const Menu = useMenu(params.domain, params.menuId);
   const { data, error, isLoading } = useQuery<ICategory>({
     queryKey: QueryKey,
     queryFn: () =>
       CategoryApi.FindOne(params.domain, params.categoryId, ["menu"]),
     retry: 1,
+    enabled: enabledQuery,
   });
 
   const qc = useQueryClient();
@@ -87,8 +108,8 @@ const page = () => {
     },
     {
       href: `/edit/menu/${params.menuId}`,
-      label: "",
-      isLoading: true,
+      label: Menu ? Menu.title : "",
+      isLoading: Menu ? false : true,
     },
     {
       href: `/edit/menu/${params.menuId}/category`,
@@ -96,29 +117,24 @@ const page = () => {
     },
     {
       href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
-      label: "",
-      isLoading: true,
+      label: data ? data.title : "",
+      isLoading: data ? false : true,
     },
   ]);
-  const form = useForm({
+  const form = useForm<z.infer<typeof EditCategorySchema>>({
     resolver: zodResolver(EditCategorySchema),
     defaultValues: {
       title: "",
       caption: "",
-      // imageUrl: "",
+      imageUrl: "",
+      imageId: "",
       visible: true,
     },
   });
   const visible = form.watch("visible");
 
   useLayoutEffect(() => {
-    const menu = qc.getQueryData<IMenu>([
-      "page",
-      params.domain,
-      "menu",
-      params.menuId,
-    ]);
-    if (menu) {
+    if (data) {
       updateBreadcrumbs([
         {
           href: "/edit/menu",
@@ -126,8 +142,8 @@ const page = () => {
         },
         {
           href: `/edit/menu/${params.menuId}`,
-          label: menu.title,
-          isLoading: true,
+          label: Menu ? Menu.title : "",
+          isLoading: Menu ? false : true,
         },
         {
           href: `/edit/menu/${params.menuId}/category`,
@@ -135,34 +151,13 @@ const page = () => {
         },
         {
           href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
-          label: "",
-          isLoading: true,
+          label: data ? data.title : "",
+          isLoading: data ? false : true,
         },
       ]);
     }
-  }, []);
-  useEffect(() => {
-    if (data?.menu) {
-      updateBreadcrumbs([
-        {
-          href: "/edit/menu",
-          label: "Menu",
-        },
-        {
-          href: `/edit/menu/${params.menuId}`,
-          label: data.menu.title,
-        },
-        {
-          href: `/edit/menu/${params.menuId}/category`,
-          label: "Categories",
-        },
-        {
-          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
-          label: data.title,
-        },
-      ]);
-    }
-  }, [data]);
+  }, [data, Menu]);
+
   const detectChanges = () => {
     if (!data) return false;
     const currentValues = form.getValues();
@@ -170,6 +165,8 @@ const page = () => {
     return (
       currentValues.title !== data.title ||
       currentValues.caption !== data.caption ||
+      currentValues.imageUrl !== data.imageUrl ||
+      currentValues.imageId !== data.imageId ||
       currentValues.visible !== data.visible
     );
   };
@@ -182,11 +179,22 @@ const page = () => {
   useEffect(() => {
     if (data) {
       form.setValue("title", data.title);
+
       if (!data.caption) {
         data.caption = "";
       }
       form.setValue("caption", data.caption);
-      // form.setValue("imageUrl", data.imageUrl);
+
+      if (!data.imageUrl) {
+        data.imageUrl = "";
+      }
+      form.setValue("imageUrl", data.imageUrl);
+
+      if (!data.imageId) {
+        data.imageId = "";
+      }
+      form.setValue("imageId", data.imageId);
+
       form.setValue("visible", data.visible);
     }
   }, [data]);
@@ -197,7 +205,8 @@ const page = () => {
       form.reset({
         title: data.title,
         caption: data.caption || "",
-        // imageUrl: data.imageUrl,
+        imageUrl: data.imageUrl || "",
+        imageId: data.imageId || "",
         visible: data.visible,
       });
     } else {
@@ -207,29 +216,34 @@ const page = () => {
     SetShowChangeActions(false);
   };
   const SaveChangesHandler = async (
-    menu: z.infer<typeof EditCategorySchema>
+    category: z.infer<typeof EditCategorySchema>
   ) => {
     SetIsSaving(true);
     if (!data) return null;
-    const UpdatedMenu: DeepPartial<IMenu> = {};
-    if (menu.title != data.title) {
-      UpdatedMenu.title = menu.title;
+    const UpdatedCategory: DeepPartial<ICategory> = {};
+    if (category.title != data.title) {
+      UpdatedCategory.title = category.title;
     }
-    if (menu.caption != data.caption) {
-      UpdatedMenu.caption = menu.caption;
+    if (category.caption != data.caption) {
+      UpdatedCategory.caption = category.caption;
     }
-    // if (menu.imageUrl != data.imageUrl) {
-    //   UpdatedMenu.imageUrl = menu.imageUrl;
-    // }
-    if (menu.visible != data.visible) {
-      UpdatedMenu.visible = menu.visible;
+    if (category.imageUrl != data.imageUrl) {
+      UpdatedCategory.imageUrl =
+        category.imageUrl == undefined ? null : category.imageUrl;
+    }
+    if (category.imageId != data.imageId) {
+      UpdatedCategory.imageId =
+        category.imageId == undefined ? null : category.imageId;
+    }
+    if (category.visible != data.visible) {
+      UpdatedCategory.visible = category.visible;
     }
 
     const [res, error] = await CategoryApi.Update(
       params.domain,
       params.categoryId,
       {
-        ...UpdatedMenu,
+        ...UpdatedCategory,
       }
     );
     if (error && !error?.response) {
@@ -264,6 +278,8 @@ const page = () => {
         title: "✓ Changes Saved Successfully.",
         description: "Your Changes Were Saved Successfully.",
       });
+      const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
+      qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
       SetShowChangeActions(false);
     }
@@ -279,28 +295,16 @@ const page = () => {
     }
   }, [error]);
 
-  if (isLoading)
-    return (
-      <>
-        <SidebarContentTitle>Edit Category</SidebarContentTitle>
-        <SidebarContent className="mb-16 p-0">
-          <div className="p-4 flex flex-col gap-4">
-            <Skeleton className="h-[300px]" />
-            <Skeleton className="h-[75px]" />
-            <Skeleton className="h-[60px]" />
-            <Skeleton className="h-[60px]" />
-          </div>
-        </SidebarContent>
-      </>
-    );
-
   return (
     <>
       <SidebarContentTitle>Edit Category</SidebarContentTitle>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
-          <SidebarContent className="mb-16 p-0">
-            <div className="p-4 flex flex-col gap-4">
+        <form
+          className="flex-1 flex flex-col overflow-hidden relative"
+          onSubmit={form.handleSubmit(SaveChangesHandler)}
+        >
+          <SidebarContent className={cn("p-0", "mb-[70px]")}>
+            <div className="p-4 flex flex-col gap-4 relative">
               <SidebarItem>
                 <div className="flex flex-col gap-2">
                   <FormField
@@ -310,7 +314,11 @@ const page = () => {
                       <FormItem>
                         <FormLabel>Category Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[40px]" />
+                          ) : (
+                            <Input placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -330,7 +338,11 @@ const page = () => {
                           </span>
                         </FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[80px]" />
+                          ) : (
+                            <Textarea placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -339,51 +351,78 @@ const page = () => {
                 </div>
 
                 <Label htmlFor="favicon">
-                  Image{" "}
+                  Category Image{" "}
                   <span className="text-muted-foreground">(Optional)</span>
                 </Label>
 
-                <div className="flex justify-center items-center gap-2">
-                  <Label
-                    htmlFor="favicon"
-                    className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden"
-                  >
-                    <img src="/icon-128x128.png" />
-                  </Label>
-                  <Input
-                    type="file"
-                    id="favicon"
-                    accept="image/png, image/jpeg, image/x-icon"
-                  />
+                <div className="flex flex-col gap-4">
+                  {isLoading ? (
+                    <Skeleton className="w-full aspect-square" />
+                  ) : (
+                    <RenderImage
+                      imageId={form.getValues("imageId") || ""}
+                      imageUrl={form.getValues("imageUrl") || ""}
+                    />
+                  )}
+
+                  {form.getValues("imageId") ? (
+                    <RenderImageData
+                      onRemove={() => form.setValue("imageId", undefined)}
+                      imageId={form.getValues("imageId")}
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            {isLoading ? (
+                              <Skeleton className="w-full h-[40px]" />
+                            ) : (
+                              <Input
+                                className="w-full"
+                                placeholder="Image Url..."
+                                {...field}
+                              />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
+                {isLoading ? (
+                  <Skeleton className="w-full h-[40px]" />
+                ) : (
+                  <MediaBrowser
+                    type="image"
+                    onChange={(imageId) => form.setValue("imageId", imageId)}
+                  />
+                )}
               </SidebarItem>
               <SidebarItem>
                 <div className="flex items-center justify-between ">
-                  <div className="flex gap-3 items-center">
-                    {visible ? (
-                      <Eye className={"text-green-300"} />
-                    ) : (
-                      <EyeOff className={"text-red-500"} />
-                    )}
-
-                    <div>
-                      <h1>{visible ? "Visible" : "Hidden"}</h1>
-                      <p className="text-muted-foreground text-xs">
-                        Your menu will
-                        {visible ? " be visible." : " not be visible"}
-                      </p>
-                    </div>
-                  </div>
+                  <DisplayState
+                    isLoading={isLoading}
+                    visible={visible}
+                    target="category"
+                  />
                   <FormField
                     control={form.control}
                     name="visible"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-[44px] h-[24px] rounded-full" />
+                          ) : (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -395,14 +434,20 @@ const page = () => {
                 title="Menu Items"
                 href={`/edit/menu/${params.menuId}/category/${params.categoryId}/item`}
               />
-              <DeleteHandler
-                target="Category"
-                targetTitle={data?.title || ""}
-                id={data?.id || ""}
-                queryKey={QueryKey}
-              />
             </div>
           </SidebarContent>
+          {isLoading ? (
+            <footer className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0 z-20">
+              <Skeleton className="w-full h-[40px]" />
+            </footer>
+          ) : (
+            <DeleteHandler
+              target="Category"
+              targetTitle={data?.title || ""}
+              id={data?.id || ""}
+              queryKey={QueryKey}
+            />
+          )}
           <ChangesHandler
             ShowChangeActions={ShowChangeActions}
             IsSaving={IsSaving}

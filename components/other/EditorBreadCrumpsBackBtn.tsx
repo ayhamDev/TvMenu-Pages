@@ -14,6 +14,7 @@ const EditorBreadCrumpsBackBtn = () => {
         size={"icon"}
         variant={"ghost"}
         className="rounded-full"
+        type="button"
         onClick={() => {
           const breadcrumb = breadcrumbs[breadcrumbs.length - 2];
           if (breadcrumb.href) {

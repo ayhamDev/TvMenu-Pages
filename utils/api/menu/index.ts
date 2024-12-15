@@ -4,6 +4,7 @@ import { FindOne } from "./FindOne";
 import { GetAll } from "./GetAll";
 import { GetCategories } from "./GetCategories";
 import { GetItems } from "./GetItems";
+import { Reorder } from "./Reorder";
 import { Update } from "./Update";
 
 export const MenuApi = {
@@ -12,6 +13,7 @@ export const MenuApi = {
   Create,
   Update,
   Delete,
+  Reorder,
   GetCategories,
   GetItems,
 };

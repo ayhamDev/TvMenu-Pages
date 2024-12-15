@@ -51,7 +51,15 @@ export default function EditorBreadcrumb({
             >
               <BreadcrumbItem>
                 {index == truncatedLinks.length - 1 ? (
-                  <BreadcrumbPage className="text-sm font-semibold">
+                  <BreadcrumbPage
+                    className="text-sm font-semibold truncate"
+                    style={{
+                      maxWidth: "120px",
+                      textOverflow: "ellipsis",
+                      overflow: "hidden",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
                     {link.isLoading ? (
                       <Skeleton className="h-[20px] w-[75px]" />
                     ) : (
@@ -63,13 +71,27 @@ export default function EditorBreadcrumb({
                     {link.href !== "#" && !link.isLoading ? (
                       <Link
                         href={link.href}
-                        className="hover:underline"
+                        className="hover:underline truncate"
+                        style={{
+                          maxWidth: "120px",
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                        }}
                         shallow={true}
                       >
                         {link.label}
                       </Link>
                     ) : (
-                      <span>
+                      <span
+                        className="truncate"
+                        style={{
+                          maxWidth: "120px",
+                          textOverflow: "ellipsis",
+                          overflow: "hidden",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
                         {link.isLoading ? (
                           <Skeleton className="h-[20px] w-[75px]" />
                         ) : (

@@ -1,10 +1,15 @@
 "use client";
 import DeleteHandler from "@/components/other/DeleteHandler";
+import DisplayState from "@/components/other/DisplayState";
+import MediaBrowser from "@/components/other/MediaBrowser";
+import RenderImage from "@/components/other/RenderImage";
+import RenderImageData from "@/components/other/RenderImageData";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
 import SidebarContent from "@/components/sidebar/SidebarContent";
 import SidebarItem from "@/components/sidebar/SidebarItem";
+import SidebarItemNavigator from "@/components/sidebar/SidebarItemNavigator";
 import {
   Form,
   FormControl,
@@ -20,9 +25,13 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
-import { ICategory } from "@/interface/Category,interface";
+import useCategory from "@/hooks/useCategory";
+import useEnableQuery from "@/hooks/useEnableQuery";
+import useMenu from "@/hooks/useMenu";
+import { ICategory } from "@/interface/Category.interface";
 import { IMenu } from "@/interface/Menu.interface";
 import { IMenuItem } from "@/interface/MenuItem.interface";
+import { cn } from "@/lib/utils";
 import { CategoryApi } from "@/utils/api/category";
 import { MenuItemApi } from "@/utils/api/item";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +43,7 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
 
-export const EditCategorySchema = z.object({
+export const EditMenuItemSchema = z.object({
   title: z
     .string()
     .max(60, {
@@ -55,7 +64,18 @@ export const EditCategorySchema = z.object({
       message: "Price must contain at most 200 character(s)",
     })
     .optional(),
-  // imageUrl: z.string().optional(),
+  imageUrl: z
+    .string()
+    .max(500, {
+      message: "ImageUrl must contain at most 500 character(s)",
+    })
+    .optional(),
+  imageId: z
+    .string()
+    .max(200, {
+      message: "ImageUrl must contain at most 200 character(s)",
+    })
+    .optional(),
   visible: z.boolean(),
 });
 
@@ -70,6 +90,7 @@ const page = () => {
   }>();
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
+  const enabledQuery = useEnableQuery();
 
   const QueryKey = [
     "page",
@@ -81,11 +102,14 @@ const page = () => {
     "item",
     params.itemId,
   ];
+  const Menu = useMenu(params.domain, params.menuId);
+  const Category = useCategory(params.domain, params.menuId, params.categoryId);
   const { data, error, isLoading } = useQuery<IMenuItem>({
     queryKey: QueryKey,
     queryFn: () =>
       MenuItemApi.FindOne(params.domain, params.itemId, ["menu", "category"]),
     retry: 1,
+    enabled: enabledQuery,
   });
   const qc = useQueryClient();
   const { updateBreadcrumbs } = useBreadcrumbs([
@@ -95,8 +119,8 @@ const page = () => {
     },
     {
       href: `/edit/menu/${params.menuId}`,
-      label: "",
-      isLoading: true,
+      label: Menu ? Menu.title : "",
+      isLoading: Menu ? false : true,
     },
     {
       href: `/edit/menu/${params.menuId}/category`,
@@ -104,102 +128,64 @@ const page = () => {
     },
     {
       href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
-      label: "",
-      isLoading: true,
+      label: Category ? Category.title : "",
+      isLoading: Category ? false : true,
     },
     {
       href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item`,
-      label: "item",
+      label: "Items",
     },
     {
-      href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item`,
-      label: "",
-      isLoading: true,
+      href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item/${params.itemId}`,
+      label: data ? data.title : "",
+      isLoading: data ? false : true,
     },
   ]);
-  const form = useForm({
-    resolver: zodResolver(EditCategorySchema),
+  const form = useForm<z.infer<typeof EditMenuItemSchema>>({
+    resolver: zodResolver(EditMenuItemSchema),
     defaultValues: {
       title: "",
       caption: "",
       price: "",
-      // imageUrl: "",
+      imageUrl: "",
+      imageId: "",
       visible: true,
     },
   });
   const visible = form.watch("visible");
 
   useLayoutEffect(() => {
-    const category = qc.getQueryData<ICategory>([
-      "page",
-      params.domain,
-      "menu",
-      params.menuId,
-      "category",
-      params.categoryId,
+    updateBreadcrumbs([
+      {
+        href: "/edit/menu",
+        label: "Menu",
+      },
+      {
+        href: `/edit/menu/${params.menuId}`,
+        label: Menu ? Menu.title : "",
+        isLoading: Menu ? false : true,
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category`,
+        label: "Categories",
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+        label: Category ? Category.title : "",
+        isLoading: Category ? false : true,
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item`,
+        label: "Items",
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category/${params.categoryId}/item/${params.itemId}`,
+        label: data ? data.title : "",
+        isLoading: data ? false : true,
+      },
     ]);
-    if (category && category.menu) {
-      updateBreadcrumbs([
-        {
-          href: "/edit/menu",
-          label: "Menu",
-        },
-        {
-          href: `/edit/menu/${category.menuId}`,
-          label: category.menu.title,
-          isLoading: true,
-        },
-        {
-          href: `/edit/menu/${category.menuId}/category`,
-          label: "Categories",
-        },
-        {
-          href: `/edit/menu/${category.menuId}/category/${category.id}`,
-          label: category.title,
-        },
-        {
-          href: `/edit/menu/${category.menuId}/category/${category.id}/item`,
-          label: "items",
-        },
-        {
-          href: `/edit/menu/${category.menuId}/category/${category.id}/item/${params.itemId}`,
-          label: "",
-          isLoading: true,
-        },
-      ]);
-    }
-  }, []);
-  useEffect(() => {
-    if (data && data.menu && data.category) {
-      updateBreadcrumbs([
-        {
-          href: "/edit/menu",
-          label: "Menu",
-        },
-        {
-          href: `/edit/menu/${data.menuId}`,
-          label: data.menu.title,
-          isLoading: true,
-        },
-        {
-          href: `/edit/menu/${data.menuId}/category`,
-          label: "Categories",
-        },
-        {
-          href: `/edit/menu/${data.menuId}/category/${data.categoryId}`,
-          label: data.category.title,
-        },
-        {
-          href: `/edit/menu/${data.menuId}/category/${data.categoryId}/item`,
-          label: "items",
-        },
-        {
-          href: `/edit/menu/${data.menuId}/category/${data.categoryId}/item/${data.id}`,
-          label: data.title,
-        },
-      ]);
-    }
-  }, [data]);
+  }, [data, Menu, Category]);
+
   const detectChanges = () => {
     if (!data) return false;
     const currentValues = form.getValues();
@@ -207,6 +193,9 @@ const page = () => {
     return (
       currentValues.title !== data.title ||
       currentValues.caption !== data.caption ||
+      currentValues.price !== data.price ||
+      currentValues.imageUrl !== data.imageUrl ||
+      currentValues.imageId !== data.imageId ||
       currentValues.visible !== data.visible
     );
   };
@@ -227,7 +216,17 @@ const page = () => {
         data.price = "";
       }
       form.setValue("price", data.price);
-      // form.setValue("imageUrl", data.imageUrl);
+
+      if (!data.imageUrl) {
+        data.imageUrl = "";
+      }
+      form.setValue("imageUrl", data.imageUrl);
+
+      if (!data.imageId) {
+        data.imageId = "";
+      }
+      form.setValue("imageId", data.imageId);
+
       form.setValue("visible", data.visible);
     }
   }, [data]);
@@ -239,7 +238,8 @@ const page = () => {
         title: data.title,
         caption: data.caption || "",
         price: data.price || "",
-        // imageUrl: data.imageUrl,
+        imageUrl: data.imageUrl || "",
+        imageId: data.imageId || "",
         visible: data.visible,
       });
     } else {
@@ -249,32 +249,37 @@ const page = () => {
     SetShowChangeActions(false);
   };
   const SaveChangesHandler = async (
-    menu: z.infer<typeof EditCategorySchema>
+    menuItem: z.infer<typeof EditMenuItemSchema>
   ) => {
     SetIsSaving(true);
     if (!data) return null;
-    const UpdatedMenu: DeepPartial<IMenuItem> = {};
-    if (menu.title != data.title) {
-      UpdatedMenu.title = menu.title;
+    const UpdatedMenuItem: DeepPartial<IMenuItem> = {};
+    if (menuItem.title != data.title) {
+      UpdatedMenuItem.title = menuItem.title;
     }
-    if (menu.caption != data.caption) {
-      UpdatedMenu.caption = menu.caption;
+    if (menuItem.caption != data.caption) {
+      UpdatedMenuItem.caption = menuItem.caption;
     }
-    if (menu.price != data.price) {
-      UpdatedMenu.price = menu.price;
+    if (menuItem.price != data.price) {
+      UpdatedMenuItem.price = menuItem.price;
     }
-    // if (menu.imageUrl != data.imageUrl) {
-    //   UpdatedMenu.imageUrl = menu.imageUrl;
-    // }
-    if (menu.visible != data.visible) {
-      UpdatedMenu.visible = menu.visible;
+    if (menuItem.imageUrl != data.imageUrl) {
+      UpdatedMenuItem.imageUrl =
+        menuItem.imageUrl == undefined ? null : menuItem.imageUrl;
+    }
+    if (menuItem.imageId != data.imageId) {
+      UpdatedMenuItem.imageId =
+        menuItem.imageId == undefined ? null : menuItem.imageId;
+    }
+    if (menuItem.visible != data.visible) {
+      UpdatedMenuItem.visible = menuItem.visible;
     }
 
     const [res, error] = await MenuItemApi.Update(
       params.domain,
       params.itemId,
       {
-        ...UpdatedMenu,
+        ...UpdatedMenuItem,
       }
     );
     if (error && !error?.response) {
@@ -309,6 +314,8 @@ const page = () => {
         title: "✓ Changes Saved Successfully.",
         description: "Your Changes Were Saved Successfully.",
       });
+      const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
+      qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
       SetShowChangeActions(false);
     }
@@ -326,26 +333,16 @@ const page = () => {
     }
   }, [error]);
 
-  if (isLoading)
-    return (
-      <>
-        <SidebarContentTitle>Edit Menu Item</SidebarContentTitle>
-        <SidebarContent className="mb-16 p-0">
-          <div className="p-4 flex flex-col gap-4">
-            <Skeleton className="h-[400px]" />
-            <Skeleton className="h-[75px]" />
-          </div>
-        </SidebarContent>
-      </>
-    );
-
   return (
     <>
       <SidebarContentTitle>Edit Menu Item</SidebarContentTitle>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(SaveChangesHandler)}>
-          <SidebarContent className="mb-16 p-0">
-            <div className="p-4 flex flex-col gap-4">
+        <form
+          className="flex-1 flex flex-col overflow-hidden relative"
+          onSubmit={form.handleSubmit(SaveChangesHandler)}
+        >
+          <SidebarContent className={cn("p-0", "mb-[70px]")}>
+            <div className="p-4 flex flex-col gap-4 relative">
               <SidebarItem>
                 <div className="flex flex-col gap-2">
                   <FormField
@@ -355,7 +352,11 @@ const page = () => {
                       <FormItem>
                         <FormLabel>Item Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[40px]" />
+                          ) : (
+                            <Input placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -375,13 +376,18 @@ const page = () => {
                           </span>
                         </FormLabel>
                         <FormControl>
-                          <Textarea placeholder="e.g. breakfast" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[80px]" />
+                          ) : (
+                            <Textarea placeholder="e.g. breakfast" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
+
                 <div className="flex flex-col gap-2">
                   <FormField
                     control={form.control}
@@ -395,7 +401,11 @@ const page = () => {
                           </span>
                         </FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. $2.99" {...field} />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[40px]" />
+                          ) : (
+                            <Input placeholder="e.g. $2.99" {...field} />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -404,51 +414,78 @@ const page = () => {
                 </div>
 
                 <Label htmlFor="favicon">
-                  Image{" "}
+                  Item Image{" "}
                   <span className="text-muted-foreground">(Optional)</span>
                 </Label>
 
-                <div className="flex justify-center items-center gap-2">
-                  <Label
-                    htmlFor="favicon"
-                    className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden"
-                  >
-                    <img src="/icon-128x128.png" />
-                  </Label>
-                  <Input
-                    type="file"
-                    id="favicon"
-                    accept="image/png, image/jpeg, image/x-icon"
-                  />
+                <div className="flex flex-col gap-4">
+                  {isLoading ? (
+                    <Skeleton className="w-full aspect-square" />
+                  ) : (
+                    <RenderImage
+                      imageId={form.getValues("imageId") || ""}
+                      imageUrl={form.getValues("imageUrl") || ""}
+                    />
+                  )}
+
+                  {form.getValues("imageId") ? (
+                    <RenderImageData
+                      onRemove={() => form.setValue("imageId", undefined)}
+                      imageId={form.getValues("imageId")}
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="imageUrl"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            {isLoading ? (
+                              <Skeleton className="w-full h-[40px]" />
+                            ) : (
+                              <Input
+                                className="w-full"
+                                placeholder="Image Url..."
+                                {...field}
+                              />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
+                {isLoading ? (
+                  <Skeleton className="w-full h-[40px]" />
+                ) : (
+                  <MediaBrowser
+                    type="image"
+                    onChange={(imageId) => form.setValue("imageId", imageId)}
+                  />
+                )}
               </SidebarItem>
               <SidebarItem>
                 <div className="flex items-center justify-between ">
-                  <div className="flex gap-3 items-center">
-                    {visible ? (
-                      <Eye className={"text-green-300"} />
-                    ) : (
-                      <EyeOff className={"text-red-500"} />
-                    )}
-
-                    <div>
-                      <h1>{visible ? "Visible" : "Hidden"}</h1>
-                      <p className="text-muted-foreground text-xs">
-                        Your menu will
-                        {visible ? " be visible." : " not be visible"}
-                      </p>
-                    </div>
-                  </div>
+                  <DisplayState
+                    isLoading={isLoading}
+                    visible={visible}
+                    target="menu item"
+                  />
                   <FormField
                     control={form.control}
                     name="visible"
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-[44px] h-[24px] rounded-full" />
+                          ) : (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -456,14 +493,20 @@ const page = () => {
                   />
                 </div>
               </SidebarItem>
-              <DeleteHandler
-                id={params.itemId}
-                target="Menu Item"
-                targetTitle={data?.title || ""}
-                queryKey={QueryKey}
-              />
             </div>
           </SidebarContent>
+          {isLoading ? (
+            <footer className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0 z-20">
+              <Skeleton className="w-full h-[40px]" />
+            </footer>
+          ) : (
+            <DeleteHandler
+              target="Menu Item"
+              targetTitle={data?.title || ""}
+              id={data?.id || ""}
+              queryKey={QueryKey}
+            />
+          )}
           <ChangesHandler
             ShowChangeActions={ShowChangeActions}
             IsSaving={IsSaving}

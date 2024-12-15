@@ -3,7 +3,8 @@ export interface IMetadata {
   title: string;
   shortName: string;
   description: string;
-  favicon: string;
+  faviconUrl: string | null;
+  faviconId: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

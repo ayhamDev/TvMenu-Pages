@@ -5,13 +5,12 @@ import { CleanPromise } from "@/utils/CleanPromise";
 import { AxiosError, AxiosResponse } from "axios";
 import { DeepPartial } from "react-hook-form";
 
-export const Update = async (
+export const Reorder = async (
   domain: string,
-  categoryId: string,
-  category: DeepPartial<ICategory>
+  category: DeepPartial<ICategory[]>
 ) => {
   return CleanPromise<
-    AxiosResponse<{ message: string; statusCode: number; data: IMenu }>,
+    AxiosResponse<{ message: string; statusCode: number }>,
     AxiosError<{ message: string; statusCode: number }>
-  >(api.patch(`/page/${domain}/category/${categoryId}`, { ...category }));
+  >(api.put(`/page/${domain}/category`, category));
 };

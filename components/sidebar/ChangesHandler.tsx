@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "../ui/button";
 
 interface IChangesHandlerProps {
@@ -8,12 +8,14 @@ interface IChangesHandlerProps {
   ShowChangeActions: boolean;
   IsSaving: boolean;
   onCancel: () => void;
+  onSave?: () => void;
 }
 
 const ChangesHandler = ({
   ShowChangeActions,
   IsSaving,
   onCancel,
+  onSave,
 }: IChangesHandlerProps) => {
   return (
     <AnimatePresence mode="sync">
@@ -21,7 +23,7 @@ const ChangesHandler = ({
         initial={{ y: 80, opacity: 0.5 }}
         animate={ShowChangeActions ? "visable" : "hidden"}
         transition={{ duration: 0.2, ease: "circInOut" }}
-        className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0"
+        className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0 z-20"
         variants={{
           hidden: {
             y: 80,
@@ -46,7 +48,8 @@ const ChangesHandler = ({
         <Button
           tabIndex={!ShowChangeActions ? -1 : undefined}
           className="w-full"
-          type="submit"
+          type={typeof onSave == "function" ? "button" : "submit"}
+          onClick={typeof onSave == "function" ? onSave : undefined}
           disabled={IsSaving}
         >
           {IsSaving && <Loader2 className="animate-spin" />}

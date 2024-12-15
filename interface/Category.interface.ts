@@ -13,7 +13,9 @@ export interface ICategory {
 
   caption: string;
 
-  imageUrl: string;
+  imageUrl: string | null;
+
+  imageId: string | null;
 
   visible: boolean;
 

@@ -9,7 +9,7 @@ import {
   DialogContent,
 } from "../ui/dialog";
 import { Button } from "../ui/button";
-import { Loader2, Router } from "lucide-react";
+import { Loader2, Router, Trash2 } from "lucide-react";
 import { MenuApi } from "@/utils/api/menu";
 import { useParams, useRouter } from "next/navigation";
 import { CategoryApi } from "@/utils/api/category";
@@ -85,15 +85,14 @@ const DeleteHandler = ({
       const previousRoute = `/${segments.slice(0, -1).join("/")}`;
 
       router.replace(previousRoute);
-      // qc.removeQueries(queryKey);
       const prevQueryKey = queryKey.slice(0, queryKey.length - 1);
       const data: { id: string }[] | null | undefined =
         qc.getQueryData(prevQueryKey);
-      console.log(data);
       if (data && typeof data == "object") {
         const items = data?.filter((item) => item.id !== id);
         qc.setQueryData(prevQueryKey, items);
       }
+      qc.removeQueries(queryKey);
     }
     SetIsDeleting(false);
     SetIsDialogOpen(false);
@@ -108,9 +107,17 @@ const DeleteHandler = ({
       }}
     >
       <DialogTrigger asChild>
-        <Button variant={"destructive"} onClick={() => SetIsDialogOpen(true)}>
-          Delete
-        </Button>
+        <footer className="w-full px-4 py-4 bg-background border-t-2 flex gap-4 absolute bottom-0 z-10">
+          <Button
+            variant={"destructive"}
+            className="w-full"
+            type="button"
+            onClick={() => SetIsDialogOpen(true)}
+          >
+            <Trash2 />
+            Delete
+          </Button>
+        </footer>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -118,7 +125,10 @@ const DeleteHandler = ({
         </DialogHeader>
         <DialogDescription>
           Are You Sure You Want To Delete{" "}
-          <span className="text-red-400 font-bold">{targetTitle}</span> ?
+          <span className="text-red-500 font-bold tracking-wider">
+            {targetTitle}
+          </span>{" "}
+          ?
         </DialogDescription>
         <DialogFooter>
           <Button

@@ -47,7 +47,6 @@ export async function middleware(request: NextRequest) {
 
     // Fetch and cache if not in cache
     const [page, error] = await FindPage(subdomain);
-    console.log(error);
 
     if (!page || (error?.response && error?.response?.status >= 201)) {
       DomainCache.delete(subdomain);

@@ -1,4 +1,4 @@
-import { ICategory } from "./Category,interface";
+import { ICategory } from "./Category.interface";
 import { IMenu } from "./Menu.interface";
 import { IPage } from "./Page.interface";
 
@@ -17,7 +17,9 @@ export interface IMenuItem {
 
   price: string;
 
-  imageUrl: string;
+  imageUrl: string | null;
+
+  imageId: string | null;
 
   visible: boolean;
 

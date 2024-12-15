@@ -1,4 +1,7 @@
 "use client";
+import MediaBrowser from "@/components/other/MediaBrowser";
+import RenderImage from "@/components/other/RenderImage";
+import RenderImageData from "@/components/other/RenderImageData";
 import SidebarContentTitle from "@/components/other/SidebarContentTitle";
 import AnimatedTab from "@/components/sidebar/AnimatedTab";
 import ChangesHandler from "@/components/sidebar/ChangesHandler";
@@ -14,7 +17,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useAuth from "@/hooks/useAuth";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useEnableQuery from "@/hooks/useEnableQuery";
 import { IPage } from "@/interface/Page.interface";
 import { cn } from "@/lib/utils";
 import { GetPage } from "@/utils/api/common/GetPageData";
@@ -51,7 +54,19 @@ export const SettingsFormSchema = z.object({
       message: "App Name must contain at least 3 character(s)",
     }),
   description: z.string().optional(),
-  favicon: z.string().optional(),
+  faviconUrl: z
+    .string()
+    .max(40, {
+      message: "Favicon must contain at most 500 character(s)",
+    })
+
+    .optional(),
+  faviconId: z
+    .string()
+    .max(200, {
+      message: "Favicon must contain at most 200 character(s)",
+    })
+    .optional(),
   public: z.boolean(),
   subdomain: z
     .string()
@@ -70,9 +85,11 @@ const page = () => {
   const qc = useQueryClient();
   const params = useParams<{ domain: string }>();
   const QueryKey = ["page", params.domain];
+  const enabledQuery = useEnableQuery();
   const { data, isLoading } = useQuery<IPage>({
     queryKey: QueryKey,
     queryFn: () => GetPage(params.domain),
+    enabled: enabledQuery,
   });
 
   useBreadcrumbs([
@@ -82,19 +99,38 @@ const page = () => {
     },
   ]);
 
-  const form = useForm({
+  const form = useForm<z.infer<typeof SettingsFormSchema>>({
     resolver: zodResolver(SettingsFormSchema),
     defaultValues: {
       title: "",
       shortName: "",
       description: "",
-      favicon: "",
+      faviconUrl: "",
+      faviconId: "",
       public: true,
       subdomain: params.domain,
     },
   });
   const IsPublic = form.watch("public");
+  const detectChanges = () => {
+    if (!data) return false;
+    const currentValues = form.getValues();
+    return (
+      currentValues.title !== data.meta.title ||
+      currentValues.shortName !== data.meta.shortName ||
+      currentValues.description !== data.meta.description ||
+      currentValues.faviconUrl !== data.meta.faviconUrl ||
+      currentValues.faviconId !== data.meta.faviconId ||
+      currentValues.description !== data.meta.description ||
+      currentValues.subdomain !== data.subdomain ||
+      currentValues.public !== data.public
+    );
+  };
 
+  // Monitor changes
+  useEffect(() => {
+    SetShowChangeActions(detectChanges());
+  }, [form.watch(), data]);
   const SaveSettings = async (changes: z.infer<typeof SettingsFormSchema>) => {
     if (!data) return null;
     SetIsSaving(true);
@@ -119,7 +155,16 @@ const page = () => {
       ChangesInstance.meta = ChangesInstance.meta || {}; // Ensure `meta` exists
       ChangesInstance.meta.description = changes.description;
     }
-
+    if (data.meta.faviconUrl != changes.faviconUrl) {
+      ChangesInstance.meta = ChangesInstance.meta || {}; // Ensure `meta` exists
+      ChangesInstance.meta.faviconUrl =
+        changes.faviconUrl == undefined ? null : changes.faviconUrl;
+    }
+    if (data.meta.faviconId != changes.faviconId) {
+      ChangesInstance.meta = ChangesInstance.meta || {}; // Ensure `meta` exists
+      ChangesInstance.meta.faviconId =
+        changes.faviconId == undefined ? null : changes.faviconId;
+    }
     const [res, error] = await UpdateSettings(params.domain, {
       ...ChangesInstance,
     });
@@ -169,6 +214,8 @@ const page = () => {
   };
   const CancelChangesHandler = () => {
     // Reset the form values to the default or fetched data
+    SetIsSaving(false);
+    SetShowChangeActions(false);
     if (data) {
       form.reset({
         title: data?.meta.title,
@@ -176,12 +223,12 @@ const page = () => {
         description: data?.meta.description,
         public: data?.public,
         subdomain: data?.subdomain,
+        faviconUrl: data?.meta.faviconUrl || "",
+        faviconId: data?.meta.faviconId || "",
       });
     } else {
       form.reset(); // Reset to the default initial state if `data` is unavailable
     }
-    SetIsSaving(false);
-    SetShowChangeActions(false);
   };
 
   useEffect(() => {
@@ -189,31 +236,24 @@ const page = () => {
       form.setValue("title", data?.meta.title);
       form.setValue("shortName", data?.meta.shortName);
       form.setValue("description", data?.meta.description);
-      form.setValue("favicon", data?.meta.favicon);
+      if (!data.meta.faviconUrl) {
+        data.meta.faviconUrl = "";
+      }
+      if (!data.meta.faviconId) {
+        data.meta.faviconId = "";
+      }
+      form.setValue("faviconId", data?.meta.faviconId);
+      form.setValue("faviconUrl", data?.meta.faviconUrl);
       form.setValue("public", data?.public);
       form.setValue("subdomain", data?.subdomain);
     }
   }, [data]);
-  if (isLoading && !data)
-    return (
-      <>
-        <SidebarContentTitle>Settings</SidebarContentTitle>
-        <SidebarContent>
-          <div className="flex flex-col gap-4">
-            <Skeleton className="h-[400px]" />
-            <Skeleton className="h-[150px]" />
-            {admin.accessToken && <Skeleton className="h-[250px]" />}
-          </div>
-        </SidebarContent>
-      </>
-    );
 
   return (
     <>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(SaveSettings)}
-          onChangeCapture={() => SetShowChangeActions(true)}
           className="flex-1 flex flex-col overflow-hidden relative"
         >
           <SidebarContentTitle>Settings</SidebarContentTitle>
@@ -227,12 +267,15 @@ const page = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Title</FormLabel>
-                        <FormControl>
+                        {isLoading ? (
+                          <Skeleton className="w-full h-[40px]" />
+                        ) : (
                           <Input
                             placeholder="e.g. Coffe Master..."
                             {...field}
                           />
-                        </FormControl>
+                        )}
+                        <FormControl></FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
@@ -248,11 +291,16 @@ const page = () => {
                       <FormItem>
                         <FormLabel>App Name</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="e.g. Coffe Master..."
-                            {...field}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[40px]" />
+                          ) : (
+                            <Input
+                              placeholder="e.g. Coffe Master..."
+                              {...field}
+                            />
+                          )}
                         </FormControl>
+
                         <FormMessage />
                       </FormItem>
                     )}
@@ -266,55 +314,95 @@ const page = () => {
                       <FormItem>
                         <FormLabel>Description</FormLabel>
                         <FormControl>
-                          <Textarea
-                            placeholder="e.g. This is a coffe shop..."
-                            {...field}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-full h-[80px]" />
+                          ) : (
+                            <Textarea
+                              placeholder="e.g. This is a coffe shop..."
+                              {...field}
+                            />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
                 </div>
-                <Label htmlFor="favicon" className="flex items-center gap-1">
-                  favicon <p className="text-muted-foreground">(logo)</p>
-                </Label>
+                <div className="flex flex-col gap-4">
+                  {isLoading ? (
+                    <Skeleton className="w-full aspect-square" />
+                  ) : (
+                    <RenderImage
+                      imageId={form.getValues("faviconId") || ""}
+                      imageUrl={form.getValues("faviconUrl") || ""}
+                    />
+                  )}
 
-                <div className="flex justify-center items-center gap-2">
-                  <Label
-                    htmlFor="favicon"
-                    className="bg-background min-w-[40px] min-h-[40px] max-w-[40px] max-h-[40px] rounded-md border flex items-center justify-center overflow-hidden"
-                  >
-                    <img src="/icon-128x128.png" />
-                  </Label>
-                  <Input
-                    type="file"
-                    id="favicon"
-                    accept="image/png, image/jpeg, image/x-icon"
-                  />
+                  {form.getValues("faviconId") ? (
+                    <RenderImageData
+                      onRemove={() => form.setValue("faviconId", undefined)}
+                      imageId={form.getValues("faviconId")}
+                    />
+                  ) : (
+                    <FormField
+                      control={form.control}
+                      name="faviconUrl"
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            {isLoading ? (
+                              <Skeleton className="w-full h-[40px]" />
+                            ) : (
+                              <Input
+                                className="w-full"
+                                placeholder="Image Url..."
+                                {...field}
+                              />
+                            )}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  favicon must be 512x512
-                </p>
+                {isLoading ? (
+                  <Skeleton className="w-full h-[40px]" />
+                ) : (
+                  <MediaBrowser
+                    type="image"
+                    onChange={(imageId) => form.setValue("faviconId", imageId)}
+                  />
+                )}
               </SidebarItem>
 
               <SidebarItem title="Site visibility">
                 <div className="flex items-center justify-between ">
                   <div className="flex gap-3 items-center">
-                    {IsPublic ? (
+                    {isLoading ? (
+                      <Skeleton className="w-[30px] h-[30px] rounded-full" />
+                    ) : IsPublic ? (
                       <Globe className={"text-green-300"} />
                     ) : (
                       <Lock className={"text-red-500"} />
                     )}
 
-                    <div>
-                      <h1>{IsPublic ? "Public" : "Private"}</h1>
-                      <p className="text-muted-foreground text-xs">
-                        Your site is{" "}
-                        {IsPublic
-                          ? "visible to everyone"
-                          : "only visible to you"}
-                      </p>
+                    <div className={cn(isLoading && "flex flex-col gap-2")}>
+                      {isLoading ? (
+                        <Skeleton className="w-[60px] h-[20px]" />
+                      ) : (
+                        <h1>{IsPublic ? "Public" : "Private"}</h1>
+                      )}
+                      {isLoading ? (
+                        <Skeleton className="w-[120px] h-[16px]" />
+                      ) : (
+                        <p className="text-muted-foreground text-xs">
+                          Your site is{" "}
+                          {IsPublic
+                            ? "visible to everyone"
+                            : "only visible to you"}
+                        </p>
+                      )}
                     </div>
                   </div>
                   <FormField
@@ -323,10 +411,14 @@ const page = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormControl>
-                          <Switch
-                            checked={field.value}
-                            onCheckedChange={field.onChange}
-                          />
+                          {isLoading ? (
+                            <Skeleton className="w-[44px] h-[24px] rounded-full" />
+                          ) : (
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          )}
                         </FormControl>
                         <FormMessage />
                       </FormItem>

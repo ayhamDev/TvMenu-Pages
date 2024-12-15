@@ -1,4 +1,4 @@
-import { ICategory } from "@/interface/Category,interface";
+import { ICategory } from "@/interface/Category.interface";
 import { IMenu } from "@/interface/Menu.interface";
 import api from "@/utils/Api";
 import { CleanPromise } from "@/utils/CleanPromise";

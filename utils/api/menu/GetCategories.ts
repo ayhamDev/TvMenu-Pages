@@ -1,3 +1,4 @@
+import { Sleep } from "@/lib/Sleep";
 import api from "@/utils/Api";
 
 export const GetCategories = async (domain: string, menuId: string) => {

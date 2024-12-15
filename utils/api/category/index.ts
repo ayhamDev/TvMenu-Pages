@@ -4,6 +4,7 @@ import { FindOne } from "./FindOne";
 import { GetAll } from "./GetAll";
 import { Update } from "./Update";
 import { Delete } from "./Delete";
+import { Reorder } from "./Reorder";
 
 export const CategoryApi = {
   Create,
@@ -11,5 +12,6 @@ export const CategoryApi = {
   GetAll,
   Update,
   Delete,
+  Reorder,
   GetItems,
 };
