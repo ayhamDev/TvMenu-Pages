@@ -24,11 +24,11 @@ import useRefreshToken from "@/hooks/useRefreshToken";
 import { IUser } from "@/interface/User.interface";
 import { useQueryState } from "nuqs";
 import AnimatedPage from "./AnimatedPage";
-import LayoutTab from "../sidebar/Layout.tab";
-import LayoutTemplateTab from "../sidebar/LayoutTemplate.tab";
-import MenuTab from "../sidebar/Menu.tab";
-import SettingsTab from "../sidebar/Settings.tab";
-import StyleTab from "../sidebar/Style.tab";
+import LayoutTab from "../legacy/Layout.tab";
+import LayoutTemplateTab from "../legacy/LayoutTemplate.tab";
+import MenuTab from "../legacy/Menu.tab";
+import SettingsTab from "../legacy/Settings.tab";
+import StyleTab from "../legacy/Style.tab";
 import {
   Sidebar,
   SidebarContent,

@@ -16,7 +16,11 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
 
   // Skip public/static files and Next.js internals
-  if (PUBLIC_FILE.test(url.pathname) || url.pathname.includes("_next")) {
+  if (
+    PUBLIC_FILE.test(url.pathname) ||
+    url.pathname.includes("_next") ||
+    url.pathname.includes("api")
+  ) {
     return NextResponse.next();
   }
   // Redirect `/edit` to `/edit/menu`

@@ -4,6 +4,8 @@ import { IClient } from "./User.interface";
 export interface IPage {
   id: string;
 
+  themeId: string;
+
   clientId: string;
 
   metaId: string;

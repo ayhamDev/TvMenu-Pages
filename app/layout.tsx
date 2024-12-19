@@ -1,5 +1,5 @@
-import { TailwindIndicator } from "@/components/other/tailwind-indicator";
-import { ThemeProvider } from "@/components/other/theme-provider";
+import { TailwindIndicator } from "@/components/custom/tailwind-indicator";
+import { ThemeProvider } from "@/components/custom/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/lib/fonts";
@@ -9,7 +9,7 @@ import type { Metadata, Viewport } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./globals.css";
-import { ReactQueryClientProvider } from "@/components/other/ReactQueryClientProvider";
+import { ReactQueryClientProvider } from "@/components/custom/ReactQueryClientProvider";
 
 export const metadata: Metadata = {
   title: {

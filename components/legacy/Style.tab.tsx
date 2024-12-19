@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
-import AnimatedTab from "./AnimatedTab";
-import SidebarContent from "./SidebarContent";
+import AnimatedTab from "../custom/AnimatedTab";
+import SidebarContent from "../custom/SidebarContent";
 import { cn } from "@/lib/utils";
-import ChangesHandler from "./ChangesHandler";
+import ChangesHandler from "../custom/ChangesHandler";
 
 const StyleTab = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);

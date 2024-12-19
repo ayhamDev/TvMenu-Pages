@@ -1,17 +1,17 @@
 "use client";
-import MenuItemLoading from "@/components/other/MenuItemLoading";
-import NotFound from "@/components/other/NotFound";
-import RenderImage from "@/components/other/RenderImage";
-import SidebarContentTitle from "@/components/other/SidebarContentTitle";
+import MenuItemLoading from "@/components/custom/MenuItemLoading";
+import NotFound from "@/components/custom/NotFound";
+import RenderImage from "@/components/custom/RenderImage";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
 import {
   Sortable,
   SortableDragHandle,
   SortableItem,
-} from "@/components/other/sortable";
-import AnimatedTab from "@/components/sidebar/AnimatedTab";
-import ChangesHandler from "@/components/sidebar/ChangesHandler";
-import SidebarContent from "@/components/sidebar/SidebarContent";
-import SidebarItem from "@/components/sidebar/SidebarItem";
+} from "@/components/custom/sortable";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
+import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarItem from "@/components/custom/SidebarItem";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,

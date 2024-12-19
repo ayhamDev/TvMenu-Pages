@@ -1,7 +1,7 @@
-import AnimatedPage from "@/components/other/AnimatedPage";
-import EditorAppBar from "@/components/other/EditorAppBar";
-import EditorPreview from "@/components/other/EditorPreview";
-import EditorSidebar from "@/components/other/EditorSidebar";
+import AnimatedPage from "@/components/custom/AnimatedPage";
+import EditorAppBar from "@/components/custom/EditorAppBar";
+import EditorPreview from "@/components/custom/EditorPreview";
+import EditorSidebar from "@/components/custom/EditorSidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { GetSession } from "@/utils/GetSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";

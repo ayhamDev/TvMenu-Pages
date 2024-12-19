@@ -1,5 +1,5 @@
 import React from "react";
-import SidebarItem from "../sidebar/SidebarItem";
+import SidebarItem from "./SidebarItem";
 
 const NotFound = ({
   type = "menu",

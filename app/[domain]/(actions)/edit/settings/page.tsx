@@ -1,12 +1,12 @@
 "use client";
-import MediaBrowser from "@/components/other/MediaBrowser";
-import RenderImage from "@/components/other/RenderImage";
-import RenderImageData from "@/components/other/RenderImageData";
-import SidebarContentTitle from "@/components/other/SidebarContentTitle";
-import AnimatedTab from "@/components/sidebar/AnimatedTab";
-import ChangesHandler from "@/components/sidebar/ChangesHandler";
-import SidebarContent from "@/components/sidebar/SidebarContent";
-import SidebarItem from "@/components/sidebar/SidebarItem";
+import MediaBrowser from "@/components/custom/MediaBrowser";
+import RenderImage from "@/components/custom/RenderImage";
+import RenderImageData from "@/components/custom/RenderImageData";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
+import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarItem from "@/components/custom/SidebarItem";
 import { Button } from "@/components/ui/button";
 import {
   Form,

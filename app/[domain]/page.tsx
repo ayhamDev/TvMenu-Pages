@@ -1,4 +1,4 @@
-import EditPageButton from "@/components/other/EditPageButton";
+import EditPageButton from "@/components/custom/EditPageButton";
 import { GetSession } from "@/utils/GetSession";
 import { IsPageOwner } from "@/utils/IsPageOwner";
 import { Metadata } from "next";

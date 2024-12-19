@@ -2,11 +2,11 @@ import useBreadcrumbs from "@/hooks/useBreadcrumbs";
 import { motion } from "framer-motion";
 import { Apple, Menu, Plus } from "lucide-react";
 import { useEffect, useLayoutEffect } from "react";
-import { Sortable, SortableDragHandle, SortableItem } from "../other/sortable";
+import { Sortable, SortableDragHandle, SortableItem } from "../custom/sortable";
 import { Button } from "../ui/button";
-import AnimatedTab from "./AnimatedTab";
-import SidebarContent from "./SidebarContent";
-import SidebarItem from "./SidebarItem";
+import AnimatedTab from "../custom/AnimatedTab";
+import SidebarContent from "../custom/SidebarContent";
+import SidebarItem from "../custom/SidebarItem";
 
 const MenuTab = () => {
   const fields = [

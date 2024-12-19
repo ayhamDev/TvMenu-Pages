@@ -10,10 +10,10 @@ import {
   SelectValue,
 } from "../ui/select";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
-import AnimatedTab from "./AnimatedTab";
-import ChangesHandler from "./ChangesHandler";
-import SidebarContent from "./SidebarContent";
-import SidebarItem from "./SidebarItem";
+import AnimatedTab from "../custom/AnimatedTab";
+import ChangesHandler from "../custom/ChangesHandler";
+import SidebarContent from "../custom/SidebarContent";
+import SidebarItem from "../custom/SidebarItem";
 
 const LayoutTab = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);

@@ -19,7 +19,7 @@ import { RadioGroup } from "@radix-ui/react-radio-group";
 import { Monitor, Smartphone } from "lucide-react";
 import { useState } from "react";
 import AvatarMenu from "./AvatarMenu";
-import TemplateItem from "./TemplateItem";
+import TemplateItem from "./ThemeItem";
 import TemplateSidebarTrigger from "./TemplateSidebarTrigger";
 import AnimatePage from "./AnimatedPage";
 export const templates = [

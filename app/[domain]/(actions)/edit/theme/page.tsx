@@ -1,16 +1,22 @@
 "use client";
-import SidebarContentTitle from "@/components/other/SidebarContentTitle";
-import TemplateItem from "@/components/other/TemplateItem";
-import { templates } from "@/components/other/TemplateSelector";
-import AnimatedTab from "@/components/sidebar/AnimatedTab";
-import SidebarContent from "@/components/sidebar/SidebarContent";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
+import { templates } from "@/components/custom/TemplateSelector";
+import ThemeItem from "@/components/custom/ThemeItem";
 import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useMenuTheme from "@/hooks/useMenuTheme";
+import { useParams } from "next/navigation";
 import { useState } from "react";
+import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 
 const page = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0].id);
+  const params = useParams<{ domain: string }>();
+  const Themes = useMenuTheme(params.domain);
+
   const handleTemplateSelect = (templateId: string) => {
     setSelectedTemplate(templateId);
   };
@@ -20,7 +26,7 @@ const page = () => {
       label: "Theme",
     },
   ]);
-
+  if (!Themes) return null;
   return (
     <>
       <SidebarContentTitle>Themes</SidebarContentTitle>
@@ -28,11 +34,21 @@ const page = () => {
         <RadioGroup
           value={selectedTemplate}
           onValueChange={handleTemplateSelect}
-          className="grid grid-cols-2 gap-4 my-4 px-2 mb-4"
+          className="my-4 px-2 mb-4"
         >
-          {templates.map((template) => (
-            <TemplateItem template={template} key={template.id} />
-          ))}
+          <ResponsiveMasonry
+            columnsCountBreakPoints={{
+              300: 1,
+              400: 2,
+            }}
+          >
+            <Masonry gutter="15px">
+              {Themes &&
+                Themes.map((theme, index) => (
+                  <ThemeItem theme={theme} key={index} />
+                ))}
+            </Masonry>
+          </ResponsiveMasonry>
         </RadioGroup>
       </SidebarContent>
       <footer className="w-full px-4 py-4 bg-background border-t-2 flex  gap-4">

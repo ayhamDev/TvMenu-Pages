@@ -9,10 +9,10 @@ import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Textarea } from "../ui/textarea";
-import AnimatedTab from "./AnimatedTab";
-import ChangesHandler from "./ChangesHandler";
-import SidebarContent from "./SidebarContent";
-import SidebarItem from "./SidebarItem";
+import AnimatedTab from "../custom/AnimatedTab";
+import ChangesHandler from "../custom/ChangesHandler";
+import SidebarContent from "../custom/SidebarContent";
+import SidebarItem from "../custom/SidebarItem";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 

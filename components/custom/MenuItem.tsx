@@ -1,6 +1,6 @@
 import { Menu } from "lucide-react";
 import React from "react";
-import SidebarItem from "../sidebar/SidebarItem";
+import SidebarItem from "./SidebarItem";
 import RenderImage from "./RenderImage";
 import { SortableDragHandle } from "./sortable";
 import { IMenu } from "@/interface/Menu.interface";

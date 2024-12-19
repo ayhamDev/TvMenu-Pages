@@ -1,10 +1,10 @@
 import { useState } from "react";
-import TemplateItem from "../other/TemplateItem";
-import { templates } from "../other/TemplateSelector";
+import TemplateItem from "../custom/ThemeItem";
+import { templates } from "../custom/TemplateSelector";
 import { Button } from "../ui/button";
 import { RadioGroup } from "../ui/radio-group";
-import AnimatedTab from "./AnimatedTab";
-import SidebarContent from "./SidebarContent";
+import AnimatedTab from "../custom/AnimatedTab";
+import SidebarContent from "../custom/SidebarContent";
 
 const LayoutTemplateTab = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(templates[0].id);

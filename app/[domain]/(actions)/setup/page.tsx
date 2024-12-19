@@ -1,4 +1,4 @@
-import TemplateSelector from "@/components/other/TemplateSelector";
+import TemplateSelector from "@/components/custom/TemplateSelector";
 import { GetSession } from "@/utils/GetSession";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
