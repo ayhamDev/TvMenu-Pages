@@ -26,7 +26,14 @@ const page = () => {
       label: "Theme",
     },
   ]);
-  if (!Themes) return null;
+  if (!Themes)
+    return (
+      <>
+        <SidebarContentTitle>Themes</SidebarContentTitle>
+        <SidebarContent></SidebarContent>
+        <footer className="w-full px-4 py-4 bg-background border-t-2 flex  gap-4"></footer>
+      </>
+    );
   return (
     <>
       <SidebarContentTitle>Themes</SidebarContentTitle>

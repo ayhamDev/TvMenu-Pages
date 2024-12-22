@@ -43,6 +43,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { EditCategorySchema } from "./[categoryId]/page";
 import useMenu from "@/hooks/useMenu";
+import { usePreview } from "@/providers/PreviewProvider";
 
 const CategoryOrderSchema = z.object({
   order: z.array(
@@ -76,12 +77,13 @@ const page = () => {
   const QueryKey = ["page", params.domain, "menu", params.menuId, "category"];
   const { data, error, isLoading } = useQuery<ICategory[]>({
     queryKey: QueryKey,
-    queryFn: () => CategoryApi.GetAll(params.domain),
+    queryFn: () => CategoryApi.GetAll(params.domain, params.menuId),
     retry: 1,
     enabled: enabledQuery,
   });
   const Menu = useMenu(params.domain, params.menuId);
 
+  const { sendMessageToPreview } = usePreview();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -162,23 +164,21 @@ const page = () => {
   }, []);
 
   useEffect(() => {
-    if (data) {
-      updateBreadcrumbs([
-        {
-          href: "/edit/menu",
-          label: "Menu",
-        },
-        {
-          href: `/edit/menu/${params.menuId}`,
-          label: Menu ? Menu.title : "",
-          isLoading: Menu ? false : true,
-        },
-        {
-          href: "#",
-          label: "Categories",
-        },
-      ]);
-    }
+    updateBreadcrumbs([
+      {
+        href: "/edit/menu",
+        label: "Menu",
+      },
+      {
+        href: `/edit/menu/${params.menuId}`,
+        label: Menu ? Menu.title : "",
+        isLoading: Menu ? false : true,
+      },
+      {
+        href: "#",
+        label: "Categories",
+      },
+    ]);
   }, [data, Menu]);
   const CreateCategoryHandler = async (
     data: z.infer<typeof CreateCategorySchema>
@@ -228,6 +228,11 @@ const page = () => {
       if (res.data?.data?.id) {
         router.push(`/edit/menu/${params.menuId}/category/${res.data.data.id}`);
       }
+      sendMessageToPreview({
+        type: "update",
+        target: "category",
+        id: null,
+      });
     }
     SetIsCreating(false);
     setIsDialogOpen(false);
@@ -278,8 +283,12 @@ const page = () => {
         description: "Your Changes Were Saved Successfully.",
       });
       SetShowChangeActions(false);
-
       qc.setQueryData(QueryKey, [...OrderedList]);
+      sendMessageToPreview({
+        type: "update",
+        target: "category",
+        id: null,
+      });
     }
     SetIsSaving(false);
   };

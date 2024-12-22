@@ -333,6 +333,7 @@ const page = () => {
                     <Skeleton className="w-full aspect-square" />
                   ) : (
                     <RenderImage
+                      className="bg-background w-full aspect-square rounded-md border"
                       imageId={form.getValues("faviconId") || ""}
                       imageUrl={form.getValues("faviconUrl") || ""}
                     />

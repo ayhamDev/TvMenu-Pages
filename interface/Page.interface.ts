@@ -1,3 +1,4 @@
+import { IMenu } from "./Menu.interface";
 import { IMetadata } from "./Meta.interfae";
 import { IClient } from "./User.interface";
 
@@ -15,6 +16,8 @@ export interface IPage {
   public: boolean;
 
   meta: IMetadata;
+
+  menu?: IMenu[];
 
   client: IClient;
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import useAuth from "@/hooks/useAuth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useState } from "react";
 
 export const ReactQueryClientProvider = ({
   children,

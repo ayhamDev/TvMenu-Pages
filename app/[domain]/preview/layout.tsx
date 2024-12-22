@@ -1,38 +1,40 @@
+import AnimatedPage from "@/components/custom/AnimatedPage";
+import InitAuth from "@/components/custom/InitAuth";
 import { TailwindIndicator } from "@/components/custom/tailwind-indicator";
 import { Toaster } from "@/components/ui/toaster";
-import { siteConfig } from "@/config/site";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { PreviewProvider } from "@/providers/PreviewProvider";
 import { ReactQueryClientProvider } from "@/providers/ReactQueryClientProvider";
 import { ThemeProvider } from "@/providers/theme-provider";
 import ReduxProvider from "@/store/Provider";
-import type { Metadata, Viewport } from "next";
+import { GetSession } from "@/utils/GetSession";
+import { IsPageOwner } from "@/utils/IsPageOwner";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
+import { ReactNode } from "react";
 import "../../globals.css";
 
-export const metadata: Metadata = {
-  title: {
-    default: siteConfig.name,
-    template: `%s | ${siteConfig.name}`,
-  },
-  description: siteConfig.description,
-  icons: {
-    icon: "/icon-128x128.png",
-  },
-};
-export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "white" },
-    { media: "(prefers-color-scheme: dark)", color: "black" },
-  ],
-};
+const Layout = async ({
+  children,
+  params,
+}: {
+  children: ReactNode;
+  params: Promise<{ domain: string }>;
+}) => {
+  const props = await params;
+  // Session Means The User Has a Refresh Token HttpOnly Cookie.
+  const cookieStore = await cookies();
+  // Get The User If He Has Session
+  const user = await GetSession(cookieStore);
+  // if There Was No Cookie Or Session Redirect to client page to authentiacte
+  if (!user) return redirect(`${process.env.NEXT_PUBLIC_DASHBOARD_URL}/client`);
 
-interface RootLayoutProps {
-  children: React.ReactNode;
-}
+  // The Page Owner else redirect to the /
+  const IsOwenr = await IsPageOwner(user, props.domain);
+  if (!IsOwenr) return redirect("/");
 
-export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head />
@@ -48,12 +50,13 @@ export default function RootLayout({ children }: RootLayoutProps) {
               <ThemeProvider
                 attribute="class"
                 defaultTheme="dark"
-                storageKey="theme"
+                storageKey="preview-theme"
               >
                 <NuqsAdapter>
-                  <div className="w-screen h-screen bg-offbackground">
+                  <AnimatedPage>
+                    <InitAuth user={user} />
                     {children}
-                  </div>
+                  </AnimatedPage>
                 </NuqsAdapter>
                 <TailwindIndicator />
               </ThemeProvider>
@@ -64,4 +67,6 @@ export default function RootLayout({ children }: RootLayoutProps) {
       </body>
     </html>
   );
-}
+};
+
+export default Layout;

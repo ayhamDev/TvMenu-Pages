@@ -48,6 +48,8 @@ import { useEffect, useLayoutEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { EditMenuItemSchema } from "./[itemId]/page";
+import { usePreview } from "@/providers/PreviewProvider";
+import MenuItem from "@/components/custom/MenuItem";
 
 const ItemOrderSchema = z.object({
   order: z.array(
@@ -96,11 +98,11 @@ const page = () => {
   const Category = useCategory(params.domain, params.menuId, params.categoryId);
   const { data, error, isLoading } = useQuery<IMenuItem[]>({
     queryKey: QueryKey,
-    queryFn: () => MenuItemApi.GetAll(params.domain),
+    queryFn: () => MenuItemApi.GetAll(params.domain, params.categoryId),
     retry: 1,
     enabled: enabledQuery,
   });
-
+  const { sendMessageToPreview } = usePreview();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -146,32 +148,30 @@ const page = () => {
   });
 
   useLayoutEffect(() => {
-    if (data) {
-      updateBreadcrumbs([
-        {
-          href: "/edit/menu",
-          label: "Menu",
-        },
-        {
-          href: `/edit/menu/${params.menuId}`,
-          label: Menu ? Menu.title : "",
-          isLoading: Menu ? false : true,
-        },
-        {
-          href: `/edit/menu/${params.menuId}/category`,
-          label: "Categories",
-        },
-        {
-          href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
-          label: Category ? Category.title : "",
-          isLoading: Menu ? false : true,
-        },
-        {
-          href: "#",
-          label: "Items",
-        },
-      ]);
-    }
+    updateBreadcrumbs([
+      {
+        href: "/edit/menu",
+        label: "Menu",
+      },
+      {
+        href: `/edit/menu/${params.menuId}`,
+        label: Menu ? Menu.title : "",
+        isLoading: Menu ? false : true,
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category`,
+        label: "Categories",
+      },
+      {
+        href: `/edit/menu/${params.menuId}/category/${params.categoryId}`,
+        label: Category ? Category.title : "",
+        isLoading: Menu ? false : true,
+      },
+      {
+        href: "#",
+        label: "Items",
+      },
+    ]);
   }, [data, Category, Menu]);
   useEffect(() => {
     if (data && data && data.length != 0) {
@@ -244,6 +244,11 @@ const page = () => {
           `/edit/menu/${params.menuId}/category/${res.data.data.categoryId}/item/${res.data.data.id}`
         );
       }
+      sendMessageToPreview({
+        type: "update",
+        target: "item",
+        id: null,
+      });
     }
     SetIsCreating(false);
     setIsDialogOpen(false);
@@ -295,7 +300,12 @@ const page = () => {
       });
       SetShowChangeActions(false);
 
-      qc.setQueryData(QueryKey, { ...data, item: OrderedList });
+      qc.setQueryData(QueryKey, OrderedList);
+      sendMessageToPreview({
+        type: "update",
+        target: "item",
+        id: null,
+      });
     }
     SetIsSaving(false);
   };
@@ -345,31 +355,10 @@ const page = () => {
                       value={item.id}
                       className="group"
                     >
-                      <SidebarItem
-                        className="flex-row justify-between items-center overflow-hidden relative select-none cursor-pointer active:opacity-60"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          router.push(
-                            `/edit/menu/${params.menuId}/category/${params.categoryId}/item/${item.id}`
-                          );
-                        }}
-                      >
-                        {/* Use Tailwind group-hover for showing the drag handle */}
-                        <SortableDragHandle className="flex items-center absolute left-[-30px] h-full opacity-0 transition-all duration-200 group-hover:left-0 group-hover:opacity-100">
-                          <MenuIcon className="size-4 p-4 h-full box-content" />
-                        </SortableDragHandle>
-                        <div className="flex items-center group-hover:ml-8 transition-all duration-150">
-                          <div className="w-[50px]">
-                            <RenderImage
-                              imageId={item.imageId || ""}
-                              imageUrl={item.imageUrl || ""}
-                            />
-                          </div>
-                          <p className="px-3">
-                            {TruncateString(item.title, 19)}
-                          </p>
-                        </div>
-                      </SidebarItem>
+                      <MenuItem
+                        item={item as IMenuItem}
+                        href={`/edit/menu/${params.menuId}/category/${params.categoryId}/item/${item.id}`}
+                      />
                     </SortableItem>
                   ))}
               </div>

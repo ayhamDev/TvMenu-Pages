@@ -9,6 +9,7 @@ const AnimatePage = ({ children }: React.PropsWithChildren) => {
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.985 }}
       transition={{ duration: 0.5 }}
+      className="w-full h-full flex flex-col"
     >
       {children}
     </motion.div>

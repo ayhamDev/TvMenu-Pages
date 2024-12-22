@@ -40,6 +40,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
+import { usePreview } from "@/providers/PreviewProvider";
 
 export const EditCategorySchema = z.object({
   title: z
@@ -99,7 +100,7 @@ const page = () => {
     retry: 1,
     enabled: enabledQuery,
   });
-
+  const { sendMessageToPreview } = usePreview();
   const qc = useQueryClient();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
@@ -281,6 +282,12 @@ const page = () => {
       const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
       qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
+      sendMessageToPreview({
+        type: "update",
+        target: "category",
+        id: params.categoryId,
+        data: res.data,
+      });
       SetShowChangeActions(false);
     }
     SetIsSaving(false);
@@ -360,6 +367,7 @@ const page = () => {
                     <Skeleton className="w-full aspect-square" />
                   ) : (
                     <RenderImage
+                      className="bg-background w-full aspect-square rounded-md border"
                       imageId={form.getValues("imageId") || ""}
                       imageUrl={form.getValues("imageUrl") || ""}
                     />

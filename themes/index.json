@@ -1,65 +1,151 @@
 [
   {
-    "id": "Subs&Salads",
-    "name": "Subs & Salads",
-    "thumbUrl": "/themes/Subs & Salads/thumb.jpg",
+    "id": "PlainList",
+    "name": "Plain Menu List",
+    "thumbUrl": "/themes/PlainList/thumb.png",
     "default": {
       "menu": [
         {
-          "title": "Main",
+          "title": "Lunch Menu",
+          "caption": "Available from 11 AM to 3 PM",
+          "imageUrl": "/placeholder.svg?height=300&width=400",
+          "imageId": "lunch-image",
+          "visible": true,
+          "createdAt": "2024-12-21T07:42:43.559Z",
+          "updatedAt": "2024-12-21T07:42:43.559Z",
           "category": [
             {
-              "title": "Subs&Salads",
+              "title": "Appetizers",
+              "caption": "Start your meal right",
+              "imageUrl": null,
+              "imageId": null,
+              "visible": true,
+              "createdAt": "2024-12-21T07:42:43.559Z",
+              "updatedAt": "2024-12-21T07:42:43.559Z",
               "item": [
                 {
-                  "title": "Steak or Chicken & Cheese",
-                  "price": "$9.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Ham & Cheese",
-                  "price": "$9.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Turkey & Cheese",
-                  "price": "$9.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Tuna Salad Sub",
-                  "price": "$9.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Chicken Salad Sub",
-                  "price": "$9.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Beef Sausage",
-                  "price": "$5.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
-                },
-                {
-                  "title": "Tuna Salad",
+                  "title": "Bruschetta",
+                  "caption": "Toasted bread topped with tomatoes, garlic, and basil",
                   "price": "$8.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "bruschetta-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
                 },
                 {
-                  "title": "Shrimp",
+                  "title": "Mozzarella Sticks",
+                  "caption": "Breaded and fried mozzarella cheese",
+                  "price": "$7.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "mozzarella-sticks-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
+                }
+              ]
+            },
+            {
+              "title": "Main Courses",
+              "caption": "Satisfying entrees",
+              "imageUrl": null,
+              "imageId": null,
+              "visible": true,
+              "createdAt": "2024-12-21T07:42:43.559Z",
+              "updatedAt": "2024-12-21T07:42:43.559Z",
+              "item": [
+                {
+                  "title": "Grilled Salmon",
+                  "caption": "Fresh salmon fillet with lemon butter sauce",
+                  "price": "$18.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "salmon-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
+                },
+                {
+                  "title": "Chicken Parmesan",
+                  "caption": "Breaded chicken breast topped with marinara and mozzarella",
+                  "price": "$16.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "chicken-parm-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": "Dinner Menu",
+          "caption": "Available from 5 PM to 10 PM",
+          "imageUrl": "/placeholder.svg?height=300&width=400",
+          "imageId": "dinner-image",
+          "visible": true,
+          "createdAt": "2024-12-21T07:42:43.559Z",
+          "updatedAt": "2024-12-21T07:42:43.559Z",
+          "category": [
+            {
+              "title": "Starters",
+              "caption": "Begin your evening right",
+              "imageUrl": null,
+              "imageId": null,
+              "visible": true,
+              "createdAt": "2024-12-21T07:42:43.559Z",
+              "updatedAt": "2024-12-21T07:42:43.559Z",
+              "item": [
+                {
+                  "title": "Calamari",
+                  "caption": "Lightly fried squid rings with marinara sauce",
                   "price": "$12.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "calamari-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
                 },
                 {
-                  "title": "Chicken Salad",
-                  "price": "$8.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
+                  "title": "Spinach and Artichoke Dip",
+                  "caption": "Creamy dip served with tortilla chips",
+                  "price": "$10.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "spinach-dip-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
+                }
+              ]
+            },
+            {
+              "title": "Entrees",
+              "caption": "Delicious main courses",
+              "imageUrl": null,
+              "imageId": null,
+              "visible": true,
+              "createdAt": "2024-12-21T07:42:43.559Z",
+              "updatedAt": "2024-12-21T07:42:43.559Z",
+              "item": [
+                {
+                  "title": "Filet Mignon",
+                  "caption": "8oz tenderloin steak with garlic mashed potatoes",
+                  "price": "$29.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "filet-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
                 },
                 {
-                  "title": "Seafood Salad",
-                  "price": "$8.99",
-                  "imageUrl": "/theme/Subs&Salads/assets/comp1"
+                  "title": "Lobster Tail",
+                  "caption": "Broiled lobster tail with drawn butter",
+                  "price": "$34.99",
+                  "imageUrl": "/placeholder.svg?height=150&width=150",
+                  "imageId": "lobster-image",
+                  "visible": true,
+                  "createdAt": "2024-12-21T07:42:43.559Z",
+                  "updatedAt": "2024-12-21T07:42:43.559Z"
                 }
               ]
             }

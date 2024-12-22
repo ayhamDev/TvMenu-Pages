@@ -1,15 +1,20 @@
 "use client";
-import { cn } from "@/lib/utils";
-import React, { useState } from "react";
-import { Button } from "../ui/button";
-import { Monitor, Smartphone } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import ThemePreview from "./ThemePreview";
+import { cn } from "@/lib/utils";
+import { usePreview } from "@/providers/PreviewProvider";
+import { Monitor, Smartphone } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "../ui/button";
 import { ScrollArea } from "../ui/scroll-area";
+import { RestaurantPageSkeleton } from "@/app/[domain]/preview/page";
 
 const EditorPreview = () => {
   const IsMobile = useIsMobile();
+  const router = useRouter();
+  const { iframeRef } = usePreview();
   const [isMobileView, setIsMobileView] = useState(false);
+  const [PreviewLoading, setPreviewLoading] = useState(true);
   const toggleView = () => {
     setIsMobileView((prev) => !prev);
   };
@@ -32,7 +37,19 @@ const EditorPreview = () => {
           {isMobileView ? <Monitor /> : <Smartphone />}
         </Button>
       )}
-      <iframe src="/preview" className="w-full h-full" />
+
+      {PreviewLoading && <RestaurantPageSkeleton />}
+      <iframe
+        ref={iframeRef}
+        src="/preview"
+        onLoad={() => {
+          setPreviewLoading(false);
+        }}
+        className={cn(
+          "w-full h-full border-none outline-none",
+          PreviewLoading ? "opacity-0" : "opacity-100"
+        )}
+      />
     </ScrollArea>
   );
 };

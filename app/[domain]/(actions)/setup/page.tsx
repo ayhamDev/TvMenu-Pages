@@ -2,7 +2,7 @@ import TemplateSelector from "@/components/custom/TemplateSelector";
 import { GetSession } from "@/utils/GetSession";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { IClientPageProps } from "../../page";
+import { IClientPageProps } from "../../(page)/page";
 import { IsPageOwner } from "@/utils/IsPageOwner";
 
 export async function generateMetadata({ params }: IClientPageProps) {

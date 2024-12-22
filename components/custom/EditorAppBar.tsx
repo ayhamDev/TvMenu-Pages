@@ -2,19 +2,15 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
-import useRefreshToken from "@/hooks/useRefreshToken";
-import { IUser } from "@/interface/User.interface";
 import { Eye, Loader2, Send } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../ui/button";
 import AvatarMenu from "./AvatarMenu";
 import EditorBreadcrumb from "./EditorBreadcrumps";
-import useAuth from "@/hooks/useAuth";
+import { IUser } from "@/interface/User.interface";
 
 const EditorAppBar = ({ user }: { user: IUser }) => {
-  const { admin, client } = useAuth();
-  const { InitalLoginState } = useRefreshToken(user);
   const { toast } = useToast();
   const { breadcrumbs } = useBreadcrumbs();
 
@@ -40,18 +36,8 @@ const EditorAppBar = ({ user }: { user: IUser }) => {
     }, 500);
   };
 
-  useEffect(() => {
-    if (
-      InitalLoginState.admin == true &&
-      InitalLoginState.client == true &&
-      !admin.accessToken &&
-      !client.accessToken
-    ) {
-      location.href = `${process.env.NEXT_PUBLIC_DASHBOARD_URL}/${user.Role}`;
-    }
-  }, [admin, client, InitalLoginState]);
   return (
-    <div className="sm:min-h-[63px] sm:h-max min-h-max shadow-inner flex flex-col-reverse sm:flex-row justify-between sm:gap-6 gap-2 sm:items-center items-start px-6 sm:pt-0 pt-6">
+    <div className="sm:min-h-[64px] sm:h-max min-h-max shadow-inner flex flex-col-reverse sm:flex-row justify-between sm:gap-6 gap-2 sm:items-center items-start px-6 sm:pt-0 pt-6">
       <div className="min-w-[200px]">
         <EditorBreadcrumb
           links={[...breadcrumbs]}

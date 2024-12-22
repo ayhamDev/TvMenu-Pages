@@ -41,6 +41,7 @@ import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
 import { CreateCategorySchema } from "./[menuId]/category/page";
 import { EditMenuSchema } from "./[menuId]/page";
+import { usePreview } from "@/providers/PreviewProvider";
 
 const MenuOrderSchema = z.object({
   order: z.array(
@@ -67,7 +68,7 @@ const page = () => {
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-
+  const { sendMessageToPreview } = usePreview();
   const qc = useQueryClient();
   const enabledQuery = useEnableQuery();
   const QueryKey = ["page", params.domain, "menu"];
@@ -173,6 +174,11 @@ const page = () => {
       if (res.data?.data?.id) {
         router.push(`/edit/menu/${res.data.data.id}`);
       }
+      sendMessageToPreview({
+        type: "update",
+        target: "menu",
+        id: null,
+      });
     }
     SetIsCreating(false);
     setIsDialogOpen(false);
@@ -215,6 +221,11 @@ const page = () => {
       });
       SetShowChangeActions(false);
       qc.setQueryData(QueryKey, OrderedList);
+      sendMessageToPreview({
+        type: "update",
+        target: "menu",
+        id: null,
+      });
     }
     SetIsSaving(false);
   };

@@ -16,6 +16,7 @@ import { CategoryApi } from "@/utils/api/category";
 import { MenuItemApi } from "@/utils/api/item";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { usePreview } from "@/providers/PreviewProvider";
 
 const DeleteHandler = ({
   target,
@@ -36,6 +37,7 @@ const DeleteHandler = ({
   }>();
   const router = useRouter();
   const qc = useQueryClient();
+  const { sendMessageToPreview } = usePreview();
   const [IsDialogOpen, SetIsDialogOpen] = useState<boolean>(false);
   const [IsDeleting, SetIsDeleting] = useState<boolean>(false);
   const HandleDelete = async () => {
@@ -93,6 +95,11 @@ const DeleteHandler = ({
         qc.setQueryData(prevQueryKey, items);
       }
       qc.removeQueries(queryKey);
+      sendMessageToPreview({
+        type: "update",
+        target: "menu",
+        id: null,
+      });
     }
     SetIsDeleting(false);
     SetIsDialogOpen(false);

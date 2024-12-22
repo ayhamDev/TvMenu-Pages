@@ -10,7 +10,8 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import { IClientPageProps } from "../../page";
+import { IClientPageProps } from "../../(page)/page";
+import InitAuth from "@/components/custom/InitAuth";
 
 export async function generateMetadata({
   params,
@@ -43,6 +44,7 @@ const layout = async ({
 
   return (
     <AnimatedPage>
+      <InitAuth user={user} />
       <SidebarProvider defaultOpen={false}>
         <EditorSidebar />
         <main className="w-full h-screen transition-all duration-1000 flex relative bg-offbackground">

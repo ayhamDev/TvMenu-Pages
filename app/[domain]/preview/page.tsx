@@ -1,17 +1,20 @@
 "use client";
 import { Skeleton } from "@/components/ui/skeleton";
-import usePage from "@/hooks/usePage";
-import useRefreshToken from "@/hooks/useRefreshToken";
+import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
+import { IPage } from "@/interface/Page.interface";
+import { IMessage } from "@/providers/PreviewProvider";
+import { PreviewApi } from "@/utils/api/Preview";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-function RestaurantPageSkeleton() {
+export function RestaurantPageSkeleton() {
   return (
-    <div className="space-y-6 p-4">
+    <div className="space-y-24 space-x-12 p-4">
       {/* Header Skeleton */}
-      <div className="space-y-2">
+      <div className="space-y-">
         <Skeleton className="h-10 w-3/4 rounded-md" />
         <Skeleton className="h-6 w-1/2 rounded-md" />
       </div>
@@ -44,7 +47,7 @@ function RestaurantPageSkeleton() {
 // Error component to display when theme import fails
 
 interface ThemeProps {
-  Menu: IMenu[];
+  menu: IMenu[];
 }
 
 const ErrorComponent = () => (
@@ -58,7 +61,35 @@ const LoadingComponent = () => <RestaurantPageSkeleton />;
 
 const page = () => {
   const params = useParams<{ domain: string }>();
-  const page = usePage(params.domain);
+  const QueryKey = ["page", params.domain, "preview"];
+  const EnabledQuery = useEnableQuery();
+  const qc = useQueryClient();
+  const {
+    data: page,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery<IPage>({
+    queryKey: QueryKey,
+    queryFn: () => PreviewApi.Get(params.domain),
+    retry: 3,
+    enabled: EnabledQuery,
+  });
+
+  function HandleMessage(e: MessageEvent<IMessage>) {
+    if (e.origin != location.origin) return null;
+    const message = e.data;
+    if (!message) return null;
+    if (message.type == "update") {
+      return refetch();
+    }
+  }
+  useEffect(() => {
+    window.addEventListener("message", HandleMessage);
+    return () => {
+      window.removeEventListener("message", HandleMessage);
+    };
+  }, []);
 
   // State to handle theme dynamically loading
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -87,7 +118,11 @@ const page = () => {
     return <LoadingComponent />;
   }
 
-  return DynamicTheme ? <DynamicTheme Menu={[]} /> : <ErrorComponent />;
+  return DynamicTheme ? (
+    <DynamicTheme menu={page?.menu || []} />
+  ) : (
+    <ErrorComponent />
+  );
 };
 
 export default page;

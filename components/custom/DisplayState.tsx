@@ -26,7 +26,7 @@ const DisplayState = ({
         {isLoading ? (
           <Skeleton className="w-[60px] h-[20px]" />
         ) : (
-          <h1>{visible ? "Public" : "Private"}</h1>
+          <h1>{visible ? "Visible" : "Hidden"}</h1>
         )}
         {isLoading ? (
           <Skeleton className="w-[120px] h-[16px]" />

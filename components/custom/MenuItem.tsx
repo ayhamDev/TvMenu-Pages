@@ -31,6 +31,7 @@ const MenuItem = ({
       <div className="flex items-center group-hover:ml-8 transition-all duration-150">
         <div className="w-[50px]">
           <RenderImage
+            className="h-full rounded-md aspect-square overflow-hidden bg-background border"
             imageId={item.imageId || ""}
             imageUrl={item.imageUrl || ""}
           />

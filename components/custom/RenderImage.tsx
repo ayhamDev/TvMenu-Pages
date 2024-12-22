@@ -1,13 +1,21 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+
+interface RenderImageProps extends React.ImgHTMLAttributes<HTMLImageElement> {
+  imageId: string;
+  imageUrl: string;
+  cover?: boolean;
+}
 
 const RenderImage = ({
   imageId,
   imageUrl,
-}: {
-  imageId: string;
-  imageUrl: string;
-}) => {
+  cover = false,
+  className,
+  ...props
+}: RenderImageProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const handleImageLoad = () => {
@@ -27,18 +35,31 @@ const RenderImage = ({
   );
 
   return (
-    <div className="bg-background w-full aspect-square rounded-md border flex items-center justify-center overflow-hidden relative">
+    <div
+      className={cn(
+        "flex items-center justify-center overflow-hidden relative",
+        className
+      )}
+    >
       {(imageId || imageUrl) && isLoading && (
         <Skeleton className="absolute inset-0 w-full h-full" />
       )}
       {(imageId || imageUrl) && (
-        <img
+        <LazyLoadImage
           src={imageSrc}
-          className={`w-full aspect-square object-contain ${
-            isLoading ? "opacity-0" : "opacity-100"
-          } transition-opacity duration-300`}
+          effect="opacity"
+          threshold={90}
+          width={"100%"}
+          height={"100%"}
+          className={cn(
+            `w-full h-full object-contain ${
+              isLoading ? "opacity-0" : "opacity-100"
+            } transition-opacity duration-1000`,
+            cover && "object-cover"
+          )}
           onLoad={handleImageLoad}
           onError={handleImageError}
+          {...props}
         />
       )}
     </div>

@@ -1,15 +1,15 @@
 import { TailwindIndicator } from "@/components/custom/tailwind-indicator";
-import { ThemeProvider } from "@/components/custom/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
+import { PreviewProvider } from "@/providers/PreviewProvider";
+import { ReactQueryClientProvider } from "@/providers/ReactQueryClientProvider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import ReduxProvider from "@/store/Provider";
 import type { Metadata, Viewport } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import "./globals.css";
-import { ReactQueryClientProvider } from "@/components/custom/ReactQueryClientProvider";
+import "../../globals.css";
 
 export const metadata: Metadata = {
   title: {
@@ -34,26 +34,34 @@ interface RootLayoutProps {
 
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
-    <>
-      <html lang="en" suppressHydrationWarning>
-        <head />
-        <body
-          className={cn(
-            "min-h-screen bg-background font-sans antialiased",
-            fontSans.variable
-          )}
-        >
-          <ReduxProvider>
+    <html lang="en" suppressHydrationWarning>
+      <head />
+      <body
+        className={cn(
+          "min-h-screen bg-background font-sans antialiased",
+          fontSans.variable
+        )}
+      >
+        <ReduxProvider>
+          <PreviewProvider>
             <ReactQueryClientProvider>
-              <ThemeProvider attribute="class" defaultTheme="dark">
-                <NuqsAdapter>{children}</NuqsAdapter>
+              <ThemeProvider
+                attribute="class"
+                defaultTheme="dark"
+                storageKey="theme"
+              >
+                <NuqsAdapter>
+                  <div className="w-screen h-screen bg-offbackground">
+                    {children}
+                  </div>
+                </NuqsAdapter>
                 <TailwindIndicator />
               </ThemeProvider>
               <Toaster />
             </ReactQueryClientProvider>
-          </ReduxProvider>
-        </body>
-      </html>
-    </>
+          </PreviewProvider>
+        </ReduxProvider>
+      </body>
+    </html>
   );
 }
