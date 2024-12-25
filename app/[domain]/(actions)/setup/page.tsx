@@ -1,9 +1,8 @@
-import TemplateSelector from "@/components/custom/TemplateSelector";
 import { GetSession } from "@/utils/GetSession";
+import { IsPageOwner } from "@/utils/IsPageOwner";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { IClientPageProps } from "../../(page)/page";
-import { IsPageOwner } from "@/utils/IsPageOwner";
 
 export async function generateMetadata({ params }: IClientPageProps) {
   const props = await params;
@@ -27,7 +26,7 @@ const page = async ({ params }: IClientPageProps) => {
   const IsOwenr = await IsPageOwner(user, props.domain);
   if (!IsOwenr) return redirect("/");
 
-  return <TemplateSelector user={user} />;
+  return <div></div>;
 };
 
 export default page;

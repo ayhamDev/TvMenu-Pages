@@ -1,10 +1,9 @@
-import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { ReactNode } from "react";
+import { createSlice } from "@reduxjs/toolkit";
 
 // Define the BreadcrumbLink type
 
-interface BreadcrumbLink {
+export interface BreadcrumbLink {
   label: string;
   isLoading?: boolean;
   href: string;

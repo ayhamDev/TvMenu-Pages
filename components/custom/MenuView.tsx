@@ -15,8 +15,7 @@ const MenuView = ({ children, theme }: MenuViewProps) => {
       setTheme(theme);
     }
   }, [theme]);
-  if (IsMobile())
-    return <div className="h-screen overflow-y-scroll">{children}</div>;
+
   return <ScrollArea className="h-screen">{children}</ScrollArea>;
 };
 

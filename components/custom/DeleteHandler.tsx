@@ -17,6 +17,7 @@ import { MenuItemApi } from "@/utils/api/item";
 import { toast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { usePreview } from "@/providers/PreviewProvider";
+import { parseAsBoolean, useQueryState } from "nuqs";
 
 const DeleteHandler = ({
   target,
@@ -37,8 +38,11 @@ const DeleteHandler = ({
   }>();
   const router = useRouter();
   const qc = useQueryClient();
-  const { sendMessageToPreview } = usePreview();
-  const [IsDialogOpen, SetIsDialogOpen] = useState<boolean>(false);
+  const { sendMessage } = usePreview();
+  const [IsDialogOpen, SetIsDialogOpen] = useQueryState<boolean>(
+    "delete",
+    parseAsBoolean.withDefault(false)
+  );
   const [IsDeleting, SetIsDeleting] = useState<boolean>(false);
   const HandleDelete = async () => {
     SetIsDeleting(true);
@@ -95,10 +99,9 @@ const DeleteHandler = ({
         qc.setQueryData(prevQueryKey, items);
       }
       qc.removeQueries(queryKey);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "menu",
-        id: null,
       });
     }
     SetIsDeleting(false);

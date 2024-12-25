@@ -41,28 +41,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { EditCategorySchema } from "./[categoryId]/page";
 import useMenu from "@/hooks/useMenu";
 import { usePreview } from "@/providers/PreviewProvider";
-
-const CategoryOrderSchema = z.object({
-  order: z.array(
-    EditCategorySchema.extend({
-      id: z.string(),
-    })
-  ),
-});
-
-export const CreateCategorySchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(3, {
-      message: "Title must contain at least 3 character(s)",
-    }),
-});
+import { parseAsBoolean, useQueryState } from "nuqs";
+import { CategoryOrderSchema } from "@/schema/CategoryOrderSchema";
+import { CreateCategorySchema } from "@/schema/CreateCategorySchema";
 
 const page = () => {
   const router = useRouter();
@@ -70,8 +53,10 @@ const page = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-
+  const [isDialogOpen, setIsDialogOpen] = useQueryState<boolean>(
+    "create",
+    parseAsBoolean.withDefault(false)
+  );
   const enabledQuery = useEnableQuery();
   const qc = useQueryClient();
   const QueryKey = ["page", params.domain, "menu", params.menuId, "category"];
@@ -83,7 +68,7 @@ const page = () => {
   });
   const Menu = useMenu(params.domain, params.menuId);
 
-  const { sendMessageToPreview } = usePreview();
+  const { sendMessage } = usePreview();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -226,12 +211,15 @@ const page = () => {
       });
       qc.invalidateQueries(QueryKey);
       if (res.data?.data?.id) {
-        router.push(`/edit/menu/${params.menuId}/category/${res.data.data.id}`);
+        setTimeout(() => {
+          router.push(
+            `/edit/menu/${params.menuId}/category/${res.data.data.id}`
+          );
+        }, 100);
       }
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "category",
-        id: null,
       });
     }
     SetIsCreating(false);
@@ -284,10 +272,9 @@ const page = () => {
       });
       SetShowChangeActions(false);
       qc.setQueryData(QueryKey, [...OrderedList]);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "category",
-        id: null,
       });
     }
     SetIsSaving(false);

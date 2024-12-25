@@ -313,7 +313,7 @@ const SortableItem = React.forwardRef<HTMLDivElement, SortableItemProps>(
 );
 SortableItem.displayName = "SortableItem";
 
-interface SortableDragHandleProps extends ButtonProps {
+interface SortableDragHandleProps extends React.HTMLAttributes<HTMLDivElement> {
   withHandle?: boolean;
 }
 

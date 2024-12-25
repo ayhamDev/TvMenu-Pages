@@ -12,6 +12,7 @@ import { redirect } from "next/navigation";
 import { ReactNode } from "react";
 import { IClientPageProps } from "../../(page)/page";
 import InitAuth from "@/components/custom/InitAuth";
+import PreviewHandler from "@/components/custom/PreviewHandler";
 
 export async function generateMetadata({
   params,
@@ -45,6 +46,7 @@ const layout = async ({
   return (
     <AnimatedPage>
       <InitAuth user={user} />
+      <PreviewHandler />
       <SidebarProvider defaultOpen={false}>
         <EditorSidebar />
         <main className="w-full h-screen transition-all duration-1000 flex relative bg-offbackground">

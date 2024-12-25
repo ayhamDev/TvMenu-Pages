@@ -36,48 +36,8 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
-export const SettingsFormSchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(5, {
-      message: "Title must contain at least 10 character(s)",
-    }),
-  shortName: z
-    .string()
-    .max(40, {
-      message: "App Name must contain at most 40 character(s)",
-    })
-    .min(3, {
-      message: "App Name must contain at least 3 character(s)",
-    }),
-  description: z.string().optional(),
-  faviconUrl: z
-    .string()
-    .max(40, {
-      message: "Favicon must contain at most 500 character(s)",
-    })
-
-    .optional(),
-  faviconId: z
-    .string()
-    .max(200, {
-      message: "Favicon must contain at most 200 character(s)",
-    })
-    .optional(),
-  public: z.boolean(),
-  subdomain: z
-    .string()
-    .max(40, {
-      message: "Subdomain must contain at most 40 character(s)",
-    })
-    .min(2, {
-      message: "Subdomain must contain at least 2 character(s)",
-    }),
-});
-
+import { SettingsFormSchema } from "@/schema/SettingsFormSchema";
+import { Label } from "@/components/ui/label";
 const page = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
@@ -329,6 +289,7 @@ const page = () => {
                   />
                 </div>
                 <div className="flex flex-col gap-4">
+                  <Label>Favicon</Label>
                   {isLoading ? (
                     <Skeleton className="w-full aspect-square" />
                   ) : (
@@ -473,7 +434,7 @@ const page = () => {
                         />
                         <Button className="rounded-l-none">Verify</Button>
                       </div>
-                      <p className="text-xs text-muted-foreground text-red-400 mt-2">
+                      <p className="text-xs text-red-400 mt-2">
                         DNS has been Verifed
                       </p>
                     </TabsContent>

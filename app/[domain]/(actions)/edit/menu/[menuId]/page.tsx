@@ -1,13 +1,13 @@
 "use client";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
 import DeleteHandler from "@/components/custom/DeleteHandler";
 import DisplayState from "@/components/custom/DisplayState";
 import MediaBrowser from "@/components/custom/MediaBrowser";
 import RenderImage from "@/components/custom/RenderImage";
 import RenderImageData from "@/components/custom/RenderImageData";
-import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
-import AnimatedTab from "@/components/custom/AnimatedTab";
-import ChangesHandler from "@/components/custom/ChangesHandler";
 import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
 import SidebarItem from "@/components/custom/SidebarItem";
 import SidebarItemNavigator from "@/components/custom/SidebarItemNavigator";
 import {
@@ -28,58 +28,40 @@ import useBreadcrumbs from "@/hooks/useBreadcrumbs";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
 import { cn } from "@/lib/utils";
+import { usePreview } from "@/providers/PreviewProvider";
+import { EditMenuSchema } from "@/schema/EditMenuSchema";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { Eye, EyeOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import { parseAsString, ParserBuilder, useQueryState } from "nuqs";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePreview } from "@/providers/PreviewProvider";
 
-export const EditMenuSchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(3, {
-      message: "Title must contain at least 3 character(s)",
-    }),
-  caption: z
-    .string()
-    .max(500, {
-      message: "Caption must contain at most 500 character(s)",
-    })
-    .optional(),
-  imageUrl: z
-    .string()
-    .max(500, {
-      message: "ImageUrl must contain at most 500 character(s)",
-    })
-    .optional(),
-  imageId: z
-    .string()
-    .max(200, {
-      message: "ImageUrl must contain at most 200 character(s)",
-    })
-    .optional(),
-  visible: z.boolean(),
-});
+enum FocusedFieldEnum {
+  title = "title",
+  caption = "caption",
+  image = "image",
+}
 
 const page = () => {
   const router = useRouter();
-
+  const { sendMessage, Message, PreviewLoaded } = usePreview();
   const params = useParams<{ domain: string; menuId: string }>();
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState<boolean>(false);
+  const [IsSaving, SetIsSaving] = useState(false);
+  const [FocusedField, SetFocusedField] = useQueryState<
+    "title" | "caption" | "image" | null
+  >(
+    "field",
+    parseAsString as ParserBuilder<"title" | "caption" | "image" | null>
+  );
 
   const enabledQuery = useEnableQuery();
   const qc = useQueryClient();
   const QueryKey = ["page", params.domain, "menu", params.menuId];
-  const { sendMessageToPreview } = usePreview();
   const { data, error, isLoading } = useQuery<IMenu>({
     queryKey: QueryKey,
     queryFn: () => MenuApi.FindOne(params.domain, params.menuId),
@@ -108,7 +90,67 @@ const page = () => {
       visible: true,
     },
   });
+
+  const TitleRef = useRef<HTMLInputElement | null>(null);
+  const CaptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const ImageUrlRef = useRef<HTMLInputElement | null>(null);
   const visible = form.watch("visible");
+  useEffect(() => {
+    if (PreviewLoaded) {
+      sendMessage({
+        target: "menu",
+        type: "blur",
+      });
+    }
+    setTimeout(() => {
+      if (FocusedField) {
+        if (PreviewLoaded) {
+          sendMessage({
+            target: "menu",
+            type: "focus",
+            data: { field: FocusedField, id: params.menuId },
+          });
+        }
+        if (FocusedField == "title") {
+          TitleRef.current?.focus();
+        }
+        if (FocusedField == "caption") {
+          CaptionRef.current?.focus();
+        }
+        if (FocusedField == "image") {
+          const imageId = form.getValues("imageId");
+
+          if (imageId) {
+            // Create query string manually
+            const query = new URLSearchParams(location.search);
+            query.set("mediaBrowser", "true"); // Set the `mediaBrowser` query param
+
+            // Update the URL with the new query string
+            router.push(`${location.pathname}?${query.toString()}`);
+          } else {
+            ImageUrlRef.current?.focus();
+          }
+        }
+      }
+    });
+  }, [
+    Message,
+    PreviewLoaded,
+    FocusedField,
+    TitleRef.current,
+    CaptionRef.current,
+  ]);
+  useEffect(() => {
+    if (PreviewLoaded) {
+      setTimeout(() => {
+        sendMessage({
+          target: "menu",
+          type: "edit",
+          data: { id: params.menuId },
+        });
+      }, 100);
+    }
+  }, [PreviewLoaded]);
   useLayoutEffect(() => {
     const menus =
       qc.getQueryData<IMenu[]>(["page", params.domain, "menu"]) || [];
@@ -141,18 +183,6 @@ const page = () => {
       ]);
     }
   }, [data]);
-  const detectChanges = () => {
-    if (!data) return false;
-    const currentValues = form.getValues();
-
-    return (
-      currentValues.title !== data.title ||
-      currentValues.caption !== data.caption ||
-      currentValues.imageUrl !== data.imageUrl ||
-      currentValues.imageId !== data.imageId ||
-      currentValues.visible !== data.visible
-    );
-  };
 
   // Monitor changes
   useEffect(() => {
@@ -179,6 +209,16 @@ const page = () => {
       form.setValue("visible", data.visible);
     }
   }, [data]);
+
+  useEffect(() => {
+    if (
+      error instanceof AxiosError &&
+      error.response &&
+      error.response?.status >= 400
+    ) {
+      router.replace("/edit/menu");
+    }
+  }, [error]);
 
   const CancelChangesHandler = () => {
     // Reset the form values to the default or fetched data
@@ -254,25 +294,27 @@ const page = () => {
       const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
       qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "menu",
-        id: params.menuId,
         data: res.data,
       });
       SetShowChangeActions(false);
     }
     SetIsSaving(false);
   };
-  useEffect(() => {
-    if (
-      error instanceof AxiosError &&
-      error.response &&
-      error.response?.status >= 400
-    ) {
-      router.replace("/edit/menu");
-    }
-  }, [error]);
+  const detectChanges = () => {
+    if (!data) return false;
+    const currentValues = form.getValues();
+
+    return (
+      currentValues.title !== data.title ||
+      currentValues.caption !== data.caption ||
+      currentValues.imageUrl !== data.imageUrl ||
+      currentValues.imageId !== data.imageId ||
+      currentValues.visible !== data.visible
+    );
+  };
 
   return (
     <>
@@ -297,7 +339,20 @@ const page = () => {
                           {isLoading ? (
                             <Skeleton className="w-full h-[40px]" />
                           ) : (
-                            <Input placeholder="e.g. breakfast" {...field} />
+                            <Input
+                              placeholder="e.g. breakfast"
+                              {...field}
+                              onFocus={() => SetFocusedField("title")}
+                              onBlur={() => {
+                                field.onBlur();
+
+                                SetFocusedField(null);
+                              }}
+                              ref={(e) => {
+                                field.ref(e);
+                                TitleRef.current = e;
+                              }}
+                            />
                           )}
                         </FormControl>
                         <FormMessage />
@@ -321,7 +376,20 @@ const page = () => {
                           {isLoading ? (
                             <Skeleton className="w-full h-[80px]" />
                           ) : (
-                            <Textarea placeholder="e.g. breakfast" {...field} />
+                            <Textarea
+                              placeholder="e.g. breakfast"
+                              {...field}
+                              onFocus={() => SetFocusedField("caption")}
+                              onBlur={() => {
+                                field.onBlur();
+
+                                SetFocusedField(null);
+                              }}
+                              ref={(e) => {
+                                field.ref(e);
+                                CaptionRef.current = e;
+                              }}
+                            />
                           )}
                         </FormControl>
                         <FormMessage />
@@ -365,6 +433,16 @@ const page = () => {
                                 className="w-full"
                                 placeholder="Image Url..."
                                 {...field}
+                                onFocus={() => SetFocusedField("image")}
+                                onBlur={() => {
+                                  field.onBlur();
+
+                                  SetFocusedField(null);
+                                }}
+                                ref={(e) => {
+                                  field.ref(e);
+                                  ImageUrlRef.current = e;
+                                }}
                               />
                             )}
                           </FormControl>

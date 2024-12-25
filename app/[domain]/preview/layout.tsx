@@ -15,6 +15,7 @@ import { redirect } from "next/navigation";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { ReactNode } from "react";
 import "../../globals.css";
+import EditPageButton from "@/components/custom/EditPageButton";
 
 const Layout = async ({
   children,
@@ -22,6 +23,7 @@ const Layout = async ({
 }: {
   children: ReactNode;
   params: Promise<{ domain: string }>;
+  searchParams: any;
 }) => {
   const props = await params;
   // Session Means The User Has a Refresh Token HttpOnly Cookie.

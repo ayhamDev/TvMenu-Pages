@@ -115,9 +115,9 @@ const TemplateSelector = ({ user }: { user: IUser }) => {
                   onValueChange={handleTemplateSelect}
                   className="grid grid-cols-2 gap-4 px-2 mb-2"
                 >
-                  {templates.map((template) => (
+                  {/* {templates.map((template) => (
                     <TemplateItem template={template} key={template.id} />
-                  ))}
+                  ))} */}
                 </RadioGroup>
               </SidebarGroup>
             </ScrollArea>

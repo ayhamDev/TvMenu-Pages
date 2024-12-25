@@ -38,7 +38,6 @@ import useCategory from "@/hooks/useCategory";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import useMenu from "@/hooks/useMenu";
 import { IMenuItem } from "@/interface/MenuItem.interface";
-import { TruncateString } from "@/lib/TruncateString";
 import { MenuItemApi } from "@/utils/api/item";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -47,28 +46,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { EditMenuItemSchema } from "./[itemId]/page";
 import { usePreview } from "@/providers/PreviewProvider";
 import MenuItem from "@/components/custom/MenuItem";
-
-const ItemOrderSchema = z.object({
-  order: z.array(
-    EditMenuItemSchema.extend({
-      id: z.string(),
-    })
-  ),
-});
-
-export const CreateItemSchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(3, {
-      message: "Title must contain at least 3 character(s)",
-    }),
-});
+import { parseAsBoolean, useQueryState } from "nuqs";
+import { CreateItemSchema } from "@/schema/CreateItemSchema";
+import { ItemOrderSchema } from "@/schema/ItemOrderSchema";
 
 const page = () => {
   const router = useRouter();
@@ -77,11 +59,13 @@ const page = () => {
     menuId: string;
     categoryId: string;
   }>();
-  const searchParams = useSearchParams();
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
+  const [isDialogOpen, setIsDialogOpen] = useQueryState<boolean>(
+    "create",
+    parseAsBoolean.withDefault(false)
+  );
   const qc = useQueryClient();
 
   const QueryKey = [
@@ -102,7 +86,7 @@ const page = () => {
     retry: 1,
     enabled: enabledQuery,
   });
-  const { sendMessageToPreview } = usePreview();
+  const { sendMessage } = usePreview();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
       href: "/edit/menu",
@@ -240,14 +224,15 @@ const page = () => {
       });
       qc.invalidateQueries(QueryKey);
       if (res.data?.data?.id) {
-        router.push(
-          `/edit/menu/${params.menuId}/category/${res.data.data.categoryId}/item/${res.data.data.id}`
-        );
+        setTimeout(() => {
+          router.push(
+            `/edit/menu/${params.menuId}/category/${res.data.data.categoryId}/item/${res.data.data.id}`
+          );
+        }, 100);
       }
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "item",
-        id: null,
       });
     }
     SetIsCreating(false);
@@ -301,10 +286,9 @@ const page = () => {
       SetShowChangeActions(false);
 
       qc.setQueryData(QueryKey, OrderedList);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "item",
-        id: null,
       });
     }
     SetIsSaving(false);

@@ -42,7 +42,7 @@ const RenderImage = ({
       )}
     >
       {(imageId || imageUrl) && isLoading && (
-        <Skeleton className="absolute inset-0 w-full h-full" />
+        <Skeleton className="absolute inset-0 w-full h-full z-[5]" />
       )}
       {(imageId || imageUrl) && (
         <LazyLoadImage

@@ -1,13 +1,13 @@
 "use client";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
 import DeleteHandler from "@/components/custom/DeleteHandler";
 import DisplayState from "@/components/custom/DisplayState";
 import MediaBrowser from "@/components/custom/MediaBrowser";
 import RenderImage from "@/components/custom/RenderImage";
 import RenderImageData from "@/components/custom/RenderImageData";
-import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
-import AnimatedTab from "@/components/custom/AnimatedTab";
-import ChangesHandler from "@/components/custom/ChangesHandler";
 import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
 import SidebarItem from "@/components/custom/SidebarItem";
 import SidebarItemNavigator from "@/components/custom/SidebarItemNavigator";
 import {
@@ -28,53 +28,27 @@ import useBreadcrumbs from "@/hooks/useBreadcrumbs";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import useMenu from "@/hooks/useMenu";
 import { ICategory } from "@/interface/Category.interface";
-import { IMenu } from "@/interface/Menu.interface";
 import { cn } from "@/lib/utils";
+import { usePreview } from "@/providers/PreviewProvider";
+import { EditCategorySchema } from "@/schema/EditCategorySchema";
 import { CategoryApi } from "@/utils/api/category";
-import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { AxiosError } from "axios";
-import { ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useState } from "react";
+import {
+  parseAsString,
+  parseAsStringEnum,
+  ParserBuilder,
+  useQueryState,
+} from "nuqs";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePreview } from "@/providers/PreviewProvider";
-
-export const EditCategorySchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(3, {
-      message: "Title must contain at least 3 character(s)",
-    }),
-  caption: z
-    .string()
-    .max(500, {
-      message: "Caption must contain at most 500 character(s)",
-    })
-    .optional(),
-  imageUrl: z
-    .string()
-    .max(500, {
-      message: "ImageUrl must contain at most 500 character(s)",
-    })
-    .optional(),
-  imageId: z
-    .string()
-    .max(200, {
-      message: "ImageUrl must contain at most 200 character(s)",
-    })
-    .optional(),
-  visible: z.boolean(),
-});
 
 const page = () => {
   const router = useRouter();
-
+  const { Message, sendMessage, PreviewLoaded } = usePreview();
   const params = useParams<{
     domain: string;
     menuId: string;
@@ -93,6 +67,12 @@ const page = () => {
   ];
   const enabledQuery = useEnableQuery();
   const Menu = useMenu(params.domain, params.menuId);
+  const [FocusedField, SetFocusedField] = useQueryState<
+    "title" | "caption" | "image" | null
+  >(
+    "field",
+    parseAsString as ParserBuilder<"title" | "caption" | "image" | null>
+  );
   const { data, error, isLoading } = useQuery<ICategory>({
     queryKey: QueryKey,
     queryFn: () =>
@@ -100,7 +80,6 @@ const page = () => {
     retry: 1,
     enabled: enabledQuery,
   });
-  const { sendMessageToPreview } = usePreview();
   const qc = useQueryClient();
   const { updateBreadcrumbs } = useBreadcrumbs([
     {
@@ -122,6 +101,7 @@ const page = () => {
       isLoading: data ? false : true,
     },
   ]);
+
   const form = useForm<z.infer<typeof EditCategorySchema>>({
     resolver: zodResolver(EditCategorySchema),
     defaultValues: {
@@ -132,8 +112,57 @@ const page = () => {
       visible: true,
     },
   });
-  const visible = form.watch("visible");
 
+  const TitleRef = useRef<HTMLInputElement | null>(null);
+  const CaptionRef = useRef<HTMLTextAreaElement | null>(null);
+  const ImageUrlRef = useRef<HTMLInputElement | null>(null);
+  const visible = form.watch("visible");
+  useEffect(() => {
+    sendMessage({
+      target: "item",
+      type: "blur",
+    });
+    setTimeout(() => {
+      if (FocusedField) {
+        sendMessage({
+          target: "category",
+          type: "focus",
+          data: { field: FocusedField, id: params.categoryId },
+        });
+        if (FocusedField == "title") {
+          TitleRef.current?.focus();
+        }
+        if (FocusedField == "caption") {
+          CaptionRef.current?.focus();
+        }
+        if (FocusedField == "image") {
+          const imageId = form.getValues("imageId");
+
+          if (imageId) {
+            // Create query string manually
+            const query = new URLSearchParams(location.search);
+            query.set("mediaBrowser", "true"); // Set the `mediaBrowser` query param
+
+            // Update the URL with the new query string
+            router.push(`${location.pathname}?${query.toString()}`);
+          } else {
+            ImageUrlRef.current?.focus();
+          }
+        }
+      }
+    });
+  }, [Message, FocusedField, TitleRef.current, CaptionRef.current]);
+  useEffect(() => {
+    if (PreviewLoaded) {
+      setTimeout(() => {
+        sendMessage({
+          target: "category",
+          type: "edit",
+          data: { id: params.categoryId },
+        });
+      });
+    }
+  }, [PreviewLoaded]);
   useLayoutEffect(() => {
     if (data) {
       updateBreadcrumbs([
@@ -282,10 +311,9 @@ const page = () => {
       const prevQueryKey = QueryKey.slice(0, QueryKey.length - 1);
       qc.invalidateQueries(prevQueryKey);
       qc.invalidateQueries(QueryKey);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "category",
-        id: params.categoryId,
         data: res.data,
       });
       SetShowChangeActions(false);
@@ -324,7 +352,19 @@ const page = () => {
                           {isLoading ? (
                             <Skeleton className="w-full h-[40px]" />
                           ) : (
-                            <Input placeholder="e.g. breakfast" {...field} />
+                            <Input
+                              placeholder="e.g. breakfast"
+                              {...field}
+                              onFocus={() => SetFocusedField("title")}
+                              onBlur={() => {
+                                field.onBlur();
+                                SetFocusedField(null);
+                              }}
+                              ref={(e) => {
+                                field.ref(e);
+                                TitleRef.current = e;
+                              }}
+                            />
                           )}
                         </FormControl>
                         <FormMessage />
@@ -348,7 +388,19 @@ const page = () => {
                           {isLoading ? (
                             <Skeleton className="w-full h-[80px]" />
                           ) : (
-                            <Textarea placeholder="e.g. breakfast" {...field} />
+                            <Textarea
+                              placeholder="e.g. breakfast"
+                              {...field}
+                              onFocus={() => SetFocusedField("caption")}
+                              onBlur={() => {
+                                field.onBlur();
+                                SetFocusedField(null);
+                              }}
+                              ref={(e) => {
+                                field.ref(e);
+                                CaptionRef.current = e;
+                              }}
+                            />
                           )}
                         </FormControl>
                         <FormMessage />
@@ -392,6 +444,15 @@ const page = () => {
                                 className="w-full"
                                 placeholder="Image Url..."
                                 {...field}
+                                onFocus={() => SetFocusedField("image")}
+                                onBlur={() => {
+                                  field.onBlur();
+                                  SetFocusedField(null);
+                                }}
+                                ref={(e) => {
+                                  field.ref(e);
+                                  ImageUrlRef.current = e;
+                                }}
                               />
                             )}
                           </FormControl>

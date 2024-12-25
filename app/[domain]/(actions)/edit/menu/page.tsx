@@ -39,27 +39,11 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { CreateCategorySchema } from "./[menuId]/category/page";
-import { EditMenuSchema } from "./[menuId]/page";
 import { usePreview } from "@/providers/PreviewProvider";
-
-const MenuOrderSchema = z.object({
-  order: z.array(
-    EditMenuSchema.extend({
-      id: z.string(),
-    })
-  ),
-});
-export const CreateMenuSchema = z.object({
-  title: z
-    .string()
-    .max(60, {
-      message: "Title must contain at most 60 character(s)",
-    })
-    .min(3, {
-      message: "Title must contain at least 3 character(s)",
-    }),
-});
+import { parseAsBoolean, useQueryState } from "nuqs";
+import { MenuOrderSchema } from "@/schema/MenuOrderSchema";
+import { CreateMenuSchema } from "@/schema/CreateMenuSchema";
+import { CreateCategorySchema } from "@/schema/CreateCategorySchema";
 
 const page = () => {
   const router = useRouter();
@@ -67,8 +51,11 @@ const page = () => {
   const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
   const [IsSaving, SetIsSaving] = useState<boolean>(false);
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
-  const [isDialogOpen, setIsDialogOpen] = useState<boolean>(false);
-  const { sendMessageToPreview } = usePreview();
+  const [isDialogOpen, setIsDialogOpen] = useQueryState<boolean>(
+    "create",
+    parseAsBoolean.withDefault(false)
+  );
+  const { sendMessage } = usePreview();
   const qc = useQueryClient();
   const enabledQuery = useEnableQuery();
   const QueryKey = ["page", params.domain, "menu"];
@@ -171,13 +158,15 @@ const page = () => {
         description: "Your Menu Was Create Successfully.",
       });
       qc.invalidateQueries(QueryKey);
+
       if (res.data?.data?.id) {
-        router.push(`/edit/menu/${res.data.data.id}`);
+        setTimeout(() => {
+          router.push(`/edit/menu/${res.data.data.id}`);
+        }, 100);
       }
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "menu",
-        id: null,
       });
     }
     SetIsCreating(false);
@@ -221,10 +210,9 @@ const page = () => {
       });
       SetShowChangeActions(false);
       qc.setQueryData(QueryKey, OrderedList);
-      sendMessageToPreview({
+      sendMessage({
         type: "update",
         target: "menu",
-        id: null,
       });
     }
     SetIsSaving(false);

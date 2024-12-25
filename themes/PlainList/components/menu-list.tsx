@@ -1,4 +1,5 @@
 import { IMenu } from "@/interface/Menu.interface";
+import AddMenu from "./AddMenu";
 import { Menu } from "./menu";
 
 interface MenuListProps {
@@ -21,6 +22,7 @@ export function MenuList({ menus }: MenuListProps) {
       {menus.map((menu) => (
         <Menu key={menu.id} menu={menu} />
       ))}
+      <AddMenu />
     </div>
   );
 }

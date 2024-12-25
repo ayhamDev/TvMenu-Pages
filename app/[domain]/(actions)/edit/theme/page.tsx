@@ -2,7 +2,6 @@
 import AnimatedTab from "@/components/custom/AnimatedTab";
 import SidebarContent from "@/components/custom/SidebarContent";
 import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
-import { templates } from "@/components/custom/TemplateSelector";
 import ThemeItem from "@/components/custom/ThemeItem";
 import { Button } from "@/components/ui/button";
 import { RadioGroup } from "@/components/ui/radio-group";
@@ -13,7 +12,9 @@ import { useState } from "react";
 import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
 
 const page = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState(templates[0].id);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(
+    undefined
+  );
   const params = useParams<{ domain: string }>();
   const Themes = useMenuTheme(params.domain);
 

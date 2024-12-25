@@ -5,20 +5,22 @@ import React, {
   useRef,
   useState,
   useEffect,
+  useLayoutEffect,
 } from "react";
 
 // Define the type of the message you're expecting
 export interface IMessage {
-  type: "update";
-  target: "menu" | "category" | "item" | "theme";
-  id?: string | null;
-  data?: unknown;
+  type: "create" | "update" | "edit" | "load" | "focus" | "blur";
+  target: "menu" | "category" | "item" | "theme" | "preview";
+  data?: Record<string, any>;
 }
 // Define the context value type
 interface PreviewContextType {
   iframeRef: React.RefObject<HTMLIFrameElement>;
-  sendMessageToPreview: (message: IMessage) => void;
-  iframeMessage: IMessage | null;
+  sendMessage: (message: IMessage) => void;
+  Message: IMessage | null;
+  IsPreview: boolean;
+  PreviewLoaded: boolean;
 }
 
 // Create the context with the correct type and provide a default value
@@ -30,11 +32,21 @@ interface PreviewProviderProps {
 
 export const PreviewProvider = ({ children }: PreviewProviderProps) => {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
-  const [iframeMessage, setPreviewMessage] = useState<IMessage | null>(null);
-
-  const sendMessageToPreview = (message: IMessage) => {
+  const [Message, setPreviewMessage] = useState<IMessage | null>(null);
+  const [IsPreview, SetIstPreview] = useState<boolean>(true);
+  const [PreviewLoaded, SetPreviewLoaded] = useState<boolean>(false);
+  useEffect(() => {
+    if (window.self === window.parent) {
+      SetIstPreview(false);
+    } else {
+      SetIstPreview(true);
+    }
+  }, [iframeRef.current]);
+  const sendMessage = (message: IMessage) => {
     if (iframeRef.current) {
-      iframeRef.current.contentWindow?.postMessage(message, "*");
+      iframeRef.current.contentWindow?.postMessage(message, location.origin);
+    } else if (window.top) {
+      window.top.postMessage(message, location.origin);
     }
   };
 
@@ -50,10 +62,15 @@ export const PreviewProvider = ({ children }: PreviewProviderProps) => {
       window.removeEventListener("message", handleMessage);
     };
   }, []);
+  useEffect(() => {
+    if (Message?.type == "load" && Message.target == "preview") {
+      SetPreviewLoaded(true);
+    }
+  }, [Message]);
 
   return (
     <PreviewContext.Provider
-      value={{ iframeRef, sendMessageToPreview, iframeMessage }}
+      value={{ iframeRef, sendMessage, Message, IsPreview, PreviewLoaded }}
     >
       {children}
     </PreviewContext.Provider>

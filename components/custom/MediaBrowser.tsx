@@ -46,6 +46,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "../ui/tabs";
 import NotFound from "./NotFound";
 import usePage from "@/hooks/usePage";
+import { parseAsBoolean, useQueryState } from "nuqs";
 
 const UploadMediaSchema = z.object({
   title: z.string().max(60, {
@@ -120,7 +121,10 @@ const MediaBrowser = ({
   const { admin } = useAuth();
   const PageData = usePage(params.domain);
   const FileRef = useRef<HTMLInputElement | null>(null);
-  const [BrowserOpen, SetBrowserOpen] = useState<boolean>(false);
+  const [BrowserOpen, SetBrowserOpen] = useQueryState<boolean>(
+    "mediaBrowser",
+    parseAsBoolean.withDefault(false)
+  );
   const [OpenUpload, SetOpenUpload] = useState<boolean>(false);
   const [Uploading, SetUploading] = useState<boolean>(false);
   const [CurrentTab, SetCurrentTab] = useState<"client" | "menuone">("client");
