@@ -10,6 +10,7 @@ import ReduxProvider from "@/store/Provider";
 import type { Metadata, Viewport } from "next";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import "../../globals.css";
+import AppProvider from "@/providers/AppProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -42,25 +43,9 @@ export default function RootLayout({ children }: RootLayoutProps) {
           fontSans.variable
         )}
       >
-        <ReduxProvider>
-          <PreviewProvider>
-            <ReactQueryClientProvider>
-              <ThemeProvider
-                attribute="class"
-                defaultTheme="dark"
-                storageKey="theme"
-              >
-                <NuqsAdapter>
-                  <div className="w-screen h-screen bg-offbackground">
-                    {children}
-                  </div>
-                </NuqsAdapter>
-                <TailwindIndicator />
-              </ThemeProvider>
-              <Toaster />
-            </ReactQueryClientProvider>
-          </PreviewProvider>
-        </ReduxProvider>
+        <AppProvider>
+          <div className="w-screen h-screen bg-offbackground">{children}</div>
+        </AppProvider>
       </body>
     </html>
   );

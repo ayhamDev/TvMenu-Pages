@@ -1,71 +1,159 @@
 "use client";
 import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
 import SidebarContent from "@/components/custom/SidebarContent";
 import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
-import ThemeItem from "@/components/custom/ThemeItem";
-import { Button } from "@/components/ui/button";
+import ThemeItem, { ThemeItemLoading } from "@/components/custom/ThemeItem";
 import { RadioGroup } from "@/components/ui/radio-group";
+import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useChangeHandler from "@/hooks/useChangeHandler";
 import useMenuTheme from "@/hooks/useMenuTheme";
+import usePage from "@/hooks/usePage";
+import { usePreview } from "@/providers/PreviewProvider";
+import { ThemeApi } from "@/utils/api/theme";
+import { useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
-import { useState } from "react";
-import Masonry, { ResponsiveMasonry } from "react-responsive-masonry";
+import { useEffect, useState } from "react";
 
 const page = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState<string | undefined>(
+  const [selectedTheme, setSelectedTheme] = useState<string | undefined>(
     undefined
   );
+  const { sendMessage, PreviewLoaded } = usePreview();
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
+
   const params = useParams<{ domain: string }>();
   const Themes = useMenuTheme(params.domain);
-
-  const handleTemplateSelect = (templateId: string) => {
-    setSelectedTemplate(templateId);
+  const Page = usePage(params.domain);
+  const qc = useQueryClient();
+  const handleThemeSelect = (ThemeId: string) => {
+    setSelectedTheme(ThemeId);
   };
+
+  const HandleSaveTheme = async () => {
+    if (!selectedTheme) return null;
+    SetIsSaving(true);
+    const [res, error] = await ThemeApi.Save(params.domain, selectedTheme);
+    if (error && !error?.response) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Change Theme.`,
+        description: "Server Is Under Maintenance.",
+      });
+    }
+    if (error && error.response && error.response?.status > 401) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Change Theme.`,
+        description: "Something Unexpected Happend Try Again Later.",
+      });
+    }
+    if (error && error.response && error.response?.status == 400) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: `✘ Failed To Change Theme.`,
+        description:
+          error.response?.data?.message ||
+          "Something Unexpected Happend Try Again Later.",
+      });
+    }
+    if (res && res.data) {
+      toast({
+        duration: 5000,
+        title: "✓ Theme Changed Successfully.",
+        description: "Your Theme Was Changed Successfully.",
+      });
+      SetShowChangeActions(false);
+      qc.setQueryData(["page", params.domain], {
+        ...Page,
+        themeId: selectedTheme,
+      });
+    }
+    SetIsSaving(false);
+  };
+
   useBreadcrumbs([
     {
       href: "/edit/theme",
       label: "Theme",
     },
   ]);
-  if (!Themes)
-    return (
-      <>
-        <SidebarContentTitle>Themes</SidebarContentTitle>
-        <SidebarContent></SidebarContent>
-        <footer className="w-full px-4 py-4 bg-background border-t-2 flex  gap-4"></footer>
-      </>
-    );
+
+  useEffect(() => {
+    if (Page && Page.themeId) {
+      setSelectedTheme(Page.themeId);
+    }
+  }, [Page]);
+  useEffect(() => {
+    if (Page && Page.themeId != selectedTheme) {
+      sendMessage({
+        type: "edit",
+        target: "theme",
+        data: { id: selectedTheme },
+      });
+      SetShowChangeActions(true);
+    } else {
+      sendMessage({
+        type: "edit",
+        target: "theme",
+        data: { id: selectedTheme },
+      });
+      SetShowChangeActions(false);
+    }
+  }, [selectedTheme, Page]);
+  // useEffect(() => {
+  //   if (Page && PreviewLoaded && selectedTheme != Page?.themeId) {
+  //     console.log(true);
+
+  //   }
+  // }, [PreviewLoaded, selectedTheme, Page]);
   return (
     <>
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={() => {
+          sendMessage({
+            type: "edit",
+            target: "theme",
+            data: { id: Page?.themeId },
+          });
+          NavGuard.accept();
+        }}
+        noCallback={NavGuard.reject}
+      />
       <SidebarContentTitle>Themes</SidebarContentTitle>
       <SidebarContent>
         <RadioGroup
-          value={selectedTemplate}
-          onValueChange={handleTemplateSelect}
-          className="my-4 px-2 mb-4"
+          value={selectedTheme}
+          onValueChange={handleThemeSelect}
+          className="my-4 px-2 mb-4 grid-cols-2 md:grid-cols-1 gap-4"
         >
-          <ResponsiveMasonry
-            columnsCountBreakPoints={{
-              300: 1,
-              400: 2,
-            }}
-          >
-            <Masonry gutter="15px">
-              {Themes &&
-                Themes.map((theme, index) => (
-                  <ThemeItem theme={theme} key={index} />
-                ))}
-            </Masonry>
-          </ResponsiveMasonry>
+          {Themes && Page
+            ? Themes.map((theme, index) => (
+                <ThemeItem theme={theme} key={index} />
+              ))
+            : Array(10)
+                .fill(true)
+                .map((_, index) => <ThemeItemLoading key={index} />)}
         </RadioGroup>
       </SidebarContent>
-      <footer className="w-full px-4 py-4 bg-background border-t-2 flex  gap-4">
-        <Button className="w-full" variant={"secondary"}>
-          Cancel
-        </Button>
-
-        <Button className="w-full">Save</Button>
-      </footer>
+      <ChangesHandler
+        ShowChangeActions={ShowChangeActions}
+        IsSaving={IsSaving}
+        onSave={HandleSaveTheme}
+        onCancel={() => setSelectedTheme(Page?.themeId)}
+      />
     </>
   );
 };

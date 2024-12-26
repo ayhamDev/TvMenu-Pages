@@ -1,9 +1,5 @@
-import { IMenu } from "./Menu.interface";
-
 export interface ITheme {
+  id: string;
   name: string;
   thumbUrl: string;
-  default: {
-    menu: IMenu;
-  };
 }

@@ -1,12 +1,13 @@
 "use client";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
 import MenuItem from "@/components/custom/MenuItem";
 import MenuItemLoading from "@/components/custom/MenuItemLoading";
 import NotFound from "@/components/custom/NotFound";
+import SidebarContent from "@/components/custom/SidebarContent";
 import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
 import { Sortable, SortableItem } from "@/components/custom/sortable";
-import AnimatedTab from "@/components/custom/AnimatedTab";
-import ChangesHandler from "@/components/custom/ChangesHandler";
-import SidebarContent from "@/components/custom/SidebarContent";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -29,27 +30,37 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useChangeHandler from "@/hooks/useChangeHandler";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
+import { useNavigationGuard } from "@/lib/next-navigation-guard";
+import { usePreview } from "@/providers/PreviewProvider";
+import { CreateCategorySchema } from "@/schema/CreateCategorySchema";
+import { CreateMenuSchema } from "@/schema/CreateMenuSchema";
+import { MenuOrderSchema } from "@/schema/MenuOrderSchema";
 import { MenuApi } from "@/utils/api/menu";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { z } from "zod";
-import { usePreview } from "@/providers/PreviewProvider";
-import { parseAsBoolean, useQueryState } from "nuqs";
-import { MenuOrderSchema } from "@/schema/MenuOrderSchema";
-import { CreateMenuSchema } from "@/schema/CreateMenuSchema";
-import { CreateCategorySchema } from "@/schema/CreateCategorySchema";
 
 const page = () => {
-  const router = useRouter();
   const params = useParams<{ domain: string }>();
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState<boolean>(false);
+
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
+
+  const router = useRouter();
+
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useQueryState<boolean>(
     "create",
@@ -237,6 +248,12 @@ const page = () => {
     );
   return (
     <>
+      {/* <PreventNavigation isDirty={ShowChangeActions} backHref="/edit/menu" /> */}
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={NavGuard.accept}
+        noCallback={NavGuard.reject}
+      />
       <Form {...OrderForm}>
         <form
           onSubmit={(e) => {

@@ -3,6 +3,7 @@ import AnimatedTab from "@/components/custom/AnimatedTab";
 import ChangesHandler from "@/components/custom/ChangesHandler";
 import DeleteHandler from "@/components/custom/DeleteHandler";
 import DisplayState from "@/components/custom/DisplayState";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
 import MediaBrowser from "@/components/custom/MediaBrowser";
 import RenderImage from "@/components/custom/RenderImage";
 import RenderImageData from "@/components/custom/RenderImageData";
@@ -25,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useChangeHandler from "@/hooks/useChangeHandler";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
 import { cn } from "@/lib/utils";
@@ -47,17 +49,23 @@ enum FocusedFieldEnum {
 }
 
 const page = () => {
-  const router = useRouter();
   const { sendMessage, Message, PreviewLoaded } = usePreview();
   const params = useParams<{ domain: string; menuId: string }>();
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState(false);
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
   const [FocusedField, SetFocusedField] = useQueryState<
     "title" | "caption" | "image" | null
   >(
     "field",
     parseAsString as ParserBuilder<"title" | "caption" | "image" | null>
   );
+
+  const router = useRouter();
 
   const enabledQuery = useEnableQuery();
   const qc = useQueryClient();
@@ -318,6 +326,11 @@ const page = () => {
 
   return (
     <>
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={NavGuard.accept}
+        noCallback={NavGuard.reject}
+      />
       <SidebarContentTitle>Edit Menu</SidebarContentTitle>
 
       <Form {...form}>

@@ -4,10 +4,12 @@ import React, { ReactNode, useEffect, useRef } from "react";
 const ScrollHandler = ({
   children,
   scrollBehavior = "center",
+  onScroll,
   edit,
 }: {
   children: ReactNode;
   scrollBehavior?: ScrollLogicalPosition;
+  onScroll?: (Message: IMessage) => void;
   edit: IMessage;
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -23,6 +25,9 @@ const ScrollHandler = ({
         behavior: "smooth",
         block: scrollBehavior,
       });
+      if (typeof onScroll == "function") {
+        onScroll(Message);
+      }
     }
   }, [Message]);
   return <div ref={containerRef}>{children}</div>;

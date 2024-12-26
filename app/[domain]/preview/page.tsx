@@ -42,6 +42,9 @@ const page = () => {
     if (e.origin != location.origin) return null;
     const message = e.data;
     if (!message) return null;
+    if (message.type == "edit" && message.target == "theme" && message.data) {
+      qc.setQueryData(QueryKey, { ...page, themeId: message.data.id });
+    }
     if (message.type == "update") {
       return refetch();
     }
@@ -51,7 +54,7 @@ const page = () => {
     return () => {
       window.removeEventListener("message", HandleMessage);
     };
-  }, []);
+  }, [page]);
 
   // State to handle theme dynamically loading
   const [themeLoaded, setThemeLoaded] = useState(false);
@@ -61,10 +64,12 @@ const page = () => {
     if (page?.themeId) {
       return dynamic<ThemeProps>(
         () =>
-          import(`../../../themes/PlainList/index`).catch((reason) => {
-            console.log(reason);
-            return ErrorComponent;
-          }),
+          import(`../../../themes/${page.themeId || "PlainList"}/index`).catch(
+            (reason) => {
+              console.log(reason);
+              return ErrorComponent;
+            }
+          ),
         { ssr: false }
       );
     }

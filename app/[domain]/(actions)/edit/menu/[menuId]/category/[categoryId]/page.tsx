@@ -3,6 +3,7 @@ import AnimatedTab from "@/components/custom/AnimatedTab";
 import ChangesHandler from "@/components/custom/ChangesHandler";
 import DeleteHandler from "@/components/custom/DeleteHandler";
 import DisplayState from "@/components/custom/DisplayState";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
 import MediaBrowser from "@/components/custom/MediaBrowser";
 import RenderImage from "@/components/custom/RenderImage";
 import RenderImageData from "@/components/custom/RenderImageData";
@@ -25,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useChangeHandler from "@/hooks/useChangeHandler";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import useMenu from "@/hooks/useMenu";
 import { ICategory } from "@/interface/Category.interface";
@@ -54,8 +56,13 @@ const page = () => {
     menuId: string;
     categoryId: string;
   }>();
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState<boolean>(false);
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
 
   const QueryKey = [
     "page",
@@ -332,6 +339,11 @@ const page = () => {
 
   return (
     <>
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={NavGuard.accept}
+        noCallback={NavGuard.reject}
+      />
       <SidebarContentTitle>Edit Category</SidebarContentTitle>
       <Form {...form}>
         <form

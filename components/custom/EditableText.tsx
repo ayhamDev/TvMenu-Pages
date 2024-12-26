@@ -38,7 +38,6 @@ const EditableText = ({
       });
     }
   }, [Message]);
-  useEffect(() => {}, [FoucsedField]);
 
   return (
     <div

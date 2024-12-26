@@ -38,9 +38,17 @@ import { DeepPartial, useForm } from "react-hook-form";
 import { z } from "zod";
 import { SettingsFormSchema } from "@/schema/SettingsFormSchema";
 import { Label } from "@/components/ui/label";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
+import useChangeHandler from "@/hooks/useChangeHandler";
 const page = () => {
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState<boolean>(false);
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
+
   const { admin } = useAuth();
   const qc = useQueryClient();
   const params = useParams<{ domain: string }>();
@@ -211,6 +219,11 @@ const page = () => {
 
   return (
     <>
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={NavGuard.accept}
+        noCallback={NavGuard.reject}
+      />
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(SaveSettings)}

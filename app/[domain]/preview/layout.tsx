@@ -51,7 +51,7 @@ const Layout = async ({
             <ReactQueryClientProvider>
               <ThemeProvider
                 attribute="class"
-                defaultTheme="dark"
+                enableSystem={true}
                 storageKey="preview-theme"
               >
                 <NuqsAdapter>

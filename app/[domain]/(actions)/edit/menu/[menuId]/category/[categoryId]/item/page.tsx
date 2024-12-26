@@ -51,6 +51,8 @@ import MenuItem from "@/components/custom/MenuItem";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { CreateItemSchema } from "@/schema/CreateItemSchema";
 import { ItemOrderSchema } from "@/schema/ItemOrderSchema";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
+import useChangeHandler from "@/hooks/useChangeHandler";
 
 const page = () => {
   const router = useRouter();
@@ -59,8 +61,13 @@ const page = () => {
     menuId: string;
     categoryId: string;
   }>();
-  const [ShowChangeActions, SetShowChangeActions] = useState<boolean>(false);
-  const [IsSaving, SetIsSaving] = useState<boolean>(false);
+  const {
+    ShowChangeActions,
+    SetShowChangeActions,
+    IsSaving,
+    SetIsSaving,
+    NavGuard,
+  } = useChangeHandler();
   const [IsCreating, SetIsCreating] = useState<boolean>(false);
   const [isDialogOpen, setIsDialogOpen] = useQueryState<boolean>(
     "create",
@@ -314,6 +321,11 @@ const page = () => {
 
   return (
     <>
+      <LeavingDialog
+        isOpen={NavGuard.active}
+        yesCallback={NavGuard.accept}
+        noCallback={NavGuard.reject}
+      />
       <Form {...OrderForm}>
         <form
           onSubmit={(e) => {

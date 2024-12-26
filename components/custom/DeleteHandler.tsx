@@ -90,7 +90,6 @@ const DeleteHandler = ({
       const segments = location.pathname.split("/").filter(Boolean); // Filter removes empty strings
       const previousRoute = `/${segments.slice(0, -1).join("/")}`;
 
-      router.replace(previousRoute);
       const prevQueryKey = queryKey.slice(0, queryKey.length - 1);
       const data: { id: string }[] | null | undefined =
         qc.getQueryData(prevQueryKey);
@@ -103,6 +102,7 @@ const DeleteHandler = ({
         type: "update",
         target: "menu",
       });
+      router.replace(previousRoute);
     }
     SetIsDeleting(false);
     SetIsDialogOpen(false);
