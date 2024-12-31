@@ -1,6 +1,6 @@
-export type SiteConfig = typeof siteConfig
+export type SiteConfig = typeof siteConfig;
 
 export const siteConfig = {
-  name: "Menuone",
-  description: "Menuone Client Web Pages.",
-}
+  name: "Menuone Pages",
+  description: "Menuone Client Web Pages Editor.",
+};

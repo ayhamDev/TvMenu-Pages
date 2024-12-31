@@ -1,16 +1,9 @@
-import { TailwindIndicator } from "@/components/custom/tailwind-indicator";
-import { Toaster } from "@/components/ui/toaster";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
-import { PreviewProvider } from "@/providers/PreviewProvider";
-import { ReactQueryClientProvider } from "@/providers/ReactQueryClientProvider";
-import { ThemeProvider } from "@/providers/theme-provider";
-import ReduxProvider from "@/store/Provider";
-import type { Metadata, Viewport } from "next";
-import { NuqsAdapter } from "nuqs/adapters/next/app";
-import "../../globals.css";
 import AppProvider from "@/providers/AppProvider";
+import type { Metadata, Viewport } from "next";
+import "@/app/globals.css";
 
 export const metadata: Metadata = {
   title: {
@@ -36,14 +29,19 @@ interface RootLayoutProps {
 export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head />
       <body
         className={cn(
           "min-h-screen bg-background font-sans antialiased",
           fontSans.variable
         )}
       >
-        <AppProvider>
+        <AppProvider
+          ThemeProviderProps={{
+            attribute: "class",
+            defaultTheme: "dark",
+            storageKey: "theme-edit",
+          }}
+        >
           <div className="w-screen h-screen bg-offbackground">{children}</div>
         </AppProvider>
       </body>

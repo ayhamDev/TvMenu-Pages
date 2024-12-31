@@ -9,31 +9,54 @@ import { Button } from "../ui/button";
 import AvatarMenu from "./AvatarMenu";
 import EditorBreadcrumb from "./EditorBreadcrumps";
 import { IUser } from "@/interface/User.interface";
+import { PublishPage } from "@/utils/api/common/PublishPage";
+import { useParams } from "next/navigation";
 
 const EditorAppBar = ({ user }: { user: IUser }) => {
+  const params = useParams<{ domain: string }>();
   const { toast } = useToast();
   const { breadcrumbs } = useBreadcrumbs();
 
   const [IsPublishing, SetIsPublishing] = useState<boolean>(false);
   const IsMobile = useIsMobile();
 
-  const HandlePublish = () => {
+  const HandlePublish = async () => {
     SetIsPublishing(true);
-    setTimeout(() => {
-      SetIsPublishing(false);
+    const [res, error] = await PublishPage(params.domain);
+    if (error && !error?.response) {
       toast({
         duration: 5000,
         variant: "destructive",
-        title: "✘ Failed To Publish Menu.",
-        description:
-          "Something Went Wrong Please Try Again later, 2023 at 5:57 PM.",
+        title: "✘ Failed To Publish Page.",
+        description: "Server Is Under Maintenance.",
       });
+    }
+    if (error && error.response && error.response?.status > 401) {
       toast({
         duration: 5000,
-        title: "✓ Menu Published Successfully.",
-        description: "Your Menu Updates Are Live Now 2023 at 5:57 PM.",
+        variant: "destructive",
+        title: "✘ Failed To Publish Page.",
+        description: "Something Went Wrong Please Try Again later.",
       });
-    }, 500);
+    }
+    if (error && error.response && error.response?.status == 400) {
+      toast({
+        duration: 5000,
+        variant: "destructive",
+        title: "✘ Failed To Publish Page.",
+        description: "Something Went Wrong Please Try Again later.",
+      });
+    }
+    if (res && res.data) {
+      console.log(true);
+
+      toast({
+        duration: 5000,
+        title: "✓ Page Published Successfully.",
+        description: "Your Page Updates Are Live Now.",
+      });
+    }
+    SetIsPublishing(false);
   };
 
   return (

@@ -2,7 +2,7 @@ import { Skeleton } from "../ui/skeleton";
 
 export function RestaurantPageSkeleton() {
   return (
-    <div className="space-y-24 p-4">
+    <div className="container m-auto mt-8 space-y-24 p-4">
       {/* Header Skeleton */}
       <div className="space-y-">
         <Skeleton className="h-10 w-3/4 rounded-md" />

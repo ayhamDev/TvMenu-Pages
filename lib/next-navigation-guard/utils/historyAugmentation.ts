@@ -1,7 +1,7 @@
 "use client";
 
 import { RenderedState } from "../types";
-import { DEBUG } from "./debug.ts";
+import { DEBUG } from "./debug";
 
 let setupDone = false;
 let writeState = () => {};

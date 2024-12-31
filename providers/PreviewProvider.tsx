@@ -21,6 +21,8 @@ interface PreviewContextType {
   Message: IMessage | null;
   IsPreview: boolean;
   PreviewLoaded: boolean;
+  SetPreviewLoaded: React.Dispatch<React.SetStateAction<boolean>>;
+  Reload: () => void;
 }
 
 // Create the context with the correct type and provide a default value
@@ -49,6 +51,12 @@ export const PreviewProvider = ({ children }: PreviewProviderProps) => {
       window.top.postMessage(message, location.origin);
     }
   };
+  const Reload = () => {
+    if (iframeRef.current) {
+      iframeRef.current?.contentWindow?.location.reload();
+      SetPreviewLoaded(false);
+    }
+  };
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -70,7 +78,15 @@ export const PreviewProvider = ({ children }: PreviewProviderProps) => {
 
   return (
     <PreviewContext.Provider
-      value={{ iframeRef, sendMessage, Message, IsPreview, PreviewLoaded }}
+      value={{
+        iframeRef,
+        sendMessage,
+        Message,
+        IsPreview,
+        PreviewLoaded,
+        SetPreviewLoaded,
+        Reload,
+      }}
     >
       {children}
     </PreviewContext.Provider>

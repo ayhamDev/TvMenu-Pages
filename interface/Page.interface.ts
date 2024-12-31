@@ -15,6 +15,8 @@ export interface IPage {
 
   public: boolean;
 
+  customCode: string | null;
+
   meta: IMetadata;
 
   menu?: IMenu[];

@@ -1,5 +1,6 @@
 "use client";
 import EditPageButton from "@/components/custom/EditPageButton";
+import RenderCode from "@/components/custom/RenderCode";
 import { RestaurantPageSkeleton } from "@/components/custom/RestaurantPageSkeleton";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import { IMenu } from "@/interface/Menu.interface";
@@ -90,6 +91,7 @@ const page = () => {
   return (
     <>
       {searchParams.get("edit") == undefined && <EditPageButton />}
+      <RenderCode content={page?.customCode || null} />
 
       {DynamicTheme ? (
         <DynamicTheme menu={page?.menu || []} />

@@ -1,22 +1,26 @@
 import ReduxProvider from "@/store/Provider";
-import { ThemeProvider } from "next-themes";
+import { ThemeProvider, ThemeProviderProps } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import React, { ReactNode } from "react";
 import { PreviewProvider } from "./PreviewProvider";
 import { ReactQueryClientProvider } from "./ReactQueryClientProvider";
 import { NavigationGuardProvider } from "@/lib/next-navigation-guard";
-const AppProvider = ({ children }: { children: ReactNode }) => {
+import { Toaster } from "@/components/ui/toaster";
+const AppProvider = ({
+  children,
+  ThemeProviderProps,
+}: {
+  children: ReactNode;
+  ThemeProviderProps: ThemeProviderProps;
+}) => {
   return (
     <ReduxProvider>
       <PreviewProvider>
         <ReactQueryClientProvider>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            storageKey="theme"
-          >
+          <ThemeProvider {...ThemeProviderProps}>
             <NuqsAdapter>
               <NavigationGuardProvider>{children}</NavigationGuardProvider>
+              <Toaster />
             </NuqsAdapter>
           </ThemeProvider>
         </ReactQueryClientProvider>

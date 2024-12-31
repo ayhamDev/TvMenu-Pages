@@ -57,7 +57,7 @@ const RenderImageData = ({
   }, [error]);
   if (!data && !isLoading) return null;
   return (
-    <div className="flex justify-between items-center gap-5 bg-background px-4 py-2 rounded-md ">
+    <div className="flex border-2 w-full justify-between items-center gap-5 bg-background px-4 py-2 rounded-md ">
       <span className="overflow-hidden truncate flex-1 list-item">
         {isLoading ? (
           <Skeleton className="w-full h-full list-item" />

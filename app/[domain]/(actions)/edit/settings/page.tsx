@@ -1,11 +1,12 @@
 "use client";
+import AnimatedTab from "@/components/custom/AnimatedTab";
+import ChangesHandler from "@/components/custom/ChangesHandler";
+import { LeavingDialog } from "@/components/custom/LeavingDialog";
 import MediaBrowser from "@/components/custom/MediaBrowser";
 import RenderImage from "@/components/custom/RenderImage";
 import RenderImageData from "@/components/custom/RenderImageData";
-import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
-import AnimatedTab from "@/components/custom/AnimatedTab";
-import ChangesHandler from "@/components/custom/ChangesHandler";
 import SidebarContent from "@/components/custom/SidebarContent";
+import SidebarContentTitle from "@/components/custom/SidebarContentTitle";
 import SidebarItem from "@/components/custom/SidebarItem";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -24,22 +26,24 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import useAuth from "@/hooks/useAuth";
 import useBreadcrumbs from "@/hooks/useBreadcrumbs";
+import useChangeHandler from "@/hooks/useChangeHandler";
 import useEnableQuery from "@/hooks/useEnableQuery";
 import { IPage } from "@/interface/Page.interface";
 import { cn } from "@/lib/utils";
+import { SettingsFormSchema } from "@/schema/SettingsFormSchema";
 import { GetPage } from "@/utils/api/common/GetPageData";
 import { UpdateSettings } from "@/utils/api/settings/UpdateSettings";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Globe, Lock } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { DeepPartial, useForm } from "react-hook-form";
+
+import CustomCode from "@/components/custom/CustomCode";
 import { z } from "zod";
-import { SettingsFormSchema } from "@/schema/SettingsFormSchema";
-import { Label } from "@/components/ui/label";
-import { LeavingDialog } from "@/components/custom/LeavingDialog";
-import useChangeHandler from "@/hooks/useChangeHandler";
+import { usePreview } from "@/providers/PreviewProvider";
+
 const page = () => {
   const {
     ShowChangeActions,
@@ -59,7 +63,7 @@ const page = () => {
     queryFn: () => GetPage(params.domain),
     enabled: enabledQuery,
   });
-
+  const { Reload } = usePreview();
   useBreadcrumbs([
     {
       href: "/edit/settings",
@@ -75,6 +79,7 @@ const page = () => {
       description: "",
       faviconUrl: "",
       faviconId: "",
+      customCode: "",
       public: true,
       subdomain: params.domain,
     },
@@ -91,6 +96,7 @@ const page = () => {
       currentValues.faviconId !== data.meta.faviconId ||
       currentValues.description !== data.meta.description ||
       currentValues.subdomain !== data.subdomain ||
+      currentValues.customCode !== data.customCode ||
       currentValues.public !== data.public
     );
   };
@@ -103,6 +109,9 @@ const page = () => {
     if (!data) return null;
     SetIsSaving(true);
     const ChangesInstance: DeepPartial<IPage> = {};
+    if (data.customCode != changes.customCode) {
+      ChangesInstance.customCode = changes.customCode;
+    }
     if (params.domain != changes.subdomain) {
       ChangesInstance.subdomain = changes.subdomain;
     }
@@ -133,6 +142,7 @@ const page = () => {
       ChangesInstance.meta.faviconId =
         changes.faviconId == undefined ? null : changes.faviconId;
     }
+
     const [res, error] = await UpdateSettings(params.domain, {
       ...ChangesInstance,
     });
@@ -174,6 +184,9 @@ const page = () => {
           `${res.data.data.subdomain}.`
         );
       } else {
+        if (res.data.data.customCode != data.customCode) {
+          Reload();
+        }
         qc.invalidateQueries(QueryKey);
       }
       SetShowChangeActions(false);
@@ -193,6 +206,7 @@ const page = () => {
         subdomain: data?.subdomain,
         faviconUrl: data?.meta.faviconUrl || "",
         faviconId: data?.meta.faviconId || "",
+        customCode: data.customCode || "",
       });
     } else {
       form.reset(); // Reset to the default initial state if `data` is unavailable
@@ -201,19 +215,23 @@ const page = () => {
 
   useEffect(() => {
     if (data) {
-      form.setValue("title", data?.meta.title);
-      form.setValue("shortName", data?.meta.shortName);
-      form.setValue("description", data?.meta.description);
       if (!data.meta.faviconUrl) {
         data.meta.faviconUrl = "";
       }
       if (!data.meta.faviconId) {
         data.meta.faviconId = "";
       }
+      if (!data.customCode) {
+        data.customCode = "";
+      }
+      form.setValue("title", data?.meta.title);
+      form.setValue("shortName", data?.meta.shortName);
+      form.setValue("description", data?.meta.description);
       form.setValue("faviconId", data?.meta.faviconId);
       form.setValue("faviconUrl", data?.meta.faviconUrl);
       form.setValue("public", data?.public);
       form.setValue("subdomain", data?.subdomain);
+      form.setValue("customCode", data?.customCode);
     }
   }, [data]);
 
@@ -303,43 +321,56 @@ const page = () => {
                 </div>
                 <div className="flex flex-col gap-4">
                   <Label>Favicon</Label>
-                  {isLoading ? (
-                    <Skeleton className="w-full aspect-square" />
-                  ) : (
-                    <RenderImage
-                      className="bg-background w-full aspect-square rounded-md border"
-                      imageId={form.getValues("faviconId") || ""}
-                      imageUrl={form.getValues("faviconUrl") || ""}
-                    />
-                  )}
+                  <div className="flex items-center gap-4 w-full">
+                    {isLoading ? (
+                      <Skeleton className="w-full aspect-square" />
+                    ) : (
+                      <RenderImage
+                        className="bg-background min-w-[40px] max-w-[40px] min-h-[40px] max-h-[40px] aspect-square rounded-md border"
+                        imageId={form.getValues("faviconId") || ""}
+                        imageUrl={form.getValues("faviconUrl") || ""}
+                      />
+                    )}
 
-                  {form.getValues("faviconId") ? (
-                    <RenderImageData
-                      onRemove={() => form.setValue("faviconId", undefined)}
-                      imageId={form.getValues("faviconId")}
-                    />
-                  ) : (
-                    <FormField
-                      control={form.control}
-                      name="faviconUrl"
-                      render={({ field }) => (
-                        <FormItem className="w-full">
-                          <FormControl>
-                            {isLoading ? (
-                              <Skeleton className="w-full h-[40px]" />
-                            ) : (
-                              <Input
-                                className="w-full"
-                                placeholder="Image Url..."
-                                {...field}
-                              />
-                            )}
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                    {form.getValues("faviconId") ? (
+                      <div className="flex flex-col w-full">
+                        <RenderImageData
+                          onRemove={() => form.setValue("faviconId", undefined)}
+                          imageId={form.getValues("faviconId")}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="faviconId"
+                          render={() => (
+                            <FormItem>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        ></FormField>
+                      </div>
+                    ) : (
+                      <FormField
+                        control={form.control}
+                        name="faviconUrl"
+                        render={({ field }) => (
+                          <FormItem className="w-full">
+                            <FormControl>
+                              {isLoading ? (
+                                <Skeleton className="w-full h-[40px]" />
+                              ) : (
+                                <Input
+                                  className="w-full"
+                                  placeholder="Image Url..."
+                                  {...field}
+                                />
+                              )}
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+                  </div>
                 </div>
                 {isLoading ? (
                   <Skeleton className="w-full h-[40px]" />
@@ -401,6 +432,21 @@ const page = () => {
                   />
                 </div>
               </SidebarItem>
+              <SidebarItem title="Embeded Code">
+                <FormField
+                  control={form.control}
+                  name="customCode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <CustomCode field={field} isLoading={isLoading} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </SidebarItem>
+
               {admin.accessToken && (
                 <SidebarItem title={`DNS`}>
                   <Tabs className="w-full" defaultValue="defualt">

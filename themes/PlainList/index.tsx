@@ -16,7 +16,7 @@ export default function MenuPage({ menu }: { menu: IMenu[] }) {
   return (
     <PreviewProvider>
       <MenuView className="bg-background" theme="light">
-        <div className="top-5 right-4 fixed rounded-full z-20">
+        <div className="top-5 right-5 fixed rounded-full z-20">
           <ThemeToggle />
         </div>
         <MenuList menus={menu} />

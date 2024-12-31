@@ -1,31 +1,35 @@
 "use client";
+import { useIsMobile } from "@/hooks/use-mobile"; // Import the useIsMobile hook
 import {
+  Blocks,
+  ChevronLeft,
+  ChevronRight,
   LucideIcon,
   PaintbrushVertical,
   Settings,
   Utensils,
 } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarProvider,
+  useSidebar,
 } from "../ui/sidebar";
-import { usePathname } from "next/navigation";
-import { useIsMobile } from "@/hooks/use-mobile"; // Import the useIsMobile hook
-import { Button } from "../ui/button";
 
-type TabType = "Theme" | "Layout" | "Menu" | "Style" | "Settings";
+type TabType = "Theme" | "Menu" | "Widget" | "Settings";
 
 const EditorSidebar = () => {
   const isMobile = useIsMobile(); // Use the useIsMobile hook to detect mobile devices
-
+  const sidebar = useSidebar();
   const Tabs: { name: TabType; icon: LucideIcon; path: string }[] = [
     { name: "Menu", icon: Utensils, path: "/edit/menu" },
+    // { name: "Widget", icon: Blocks, path: "/edit/widget" },
     { name: "Theme", icon: PaintbrushVertical, path: "/edit/theme" },
     { name: "Settings", icon: Settings, path: "/edit/settings" },
   ];
@@ -50,6 +54,7 @@ const EditorSidebar = () => {
                       tooltip={tabItem.name}
                     >
                       <tabItem.icon />
+                      <span>{tabItem.name}</span>
                     </SidebarMenuButton>
                   </Link>
                 </SidebarMenuItem>
@@ -59,6 +64,15 @@ const EditorSidebar = () => {
 
           {/* Mobile Bottom Bar */}
         </SidebarContent>
+        <SidebarFooter>
+          <SidebarMenuButton
+            className="rounded-full max-w-max ml-auto"
+            variant={"default"}
+            onClick={() => sidebar.toggleSidebar()}
+          >
+            {sidebar.state == "collapsed" ? <ChevronRight /> : <ChevronLeft />}
+          </SidebarMenuButton>
+        </SidebarFooter>
       </Sidebar>
       {/* {isMobile && (
         <div className="fixed bottom-0 left-0 right-0 shadow-md sm:hidden flex z-40 bg-offbackground">

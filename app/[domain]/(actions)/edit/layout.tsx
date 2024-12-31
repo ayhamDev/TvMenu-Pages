@@ -10,9 +10,9 @@ import { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ReactNode } from "react";
-import { IClientPageProps } from "../../(page)/page";
 import InitAuth from "@/components/custom/InitAuth";
 import PreviewHandler from "@/components/custom/PreviewHandler";
+import { IClientPageProps } from "@/interface/ClientPageProps.interface";
 
 export async function generateMetadata({
   params,
@@ -20,7 +20,7 @@ export async function generateMetadata({
   const props = await params;
 
   return {
-    title: `Edit ${(await params).domain}`,
+    title: `Edit ${props.domain}`,
   };
 }
 
